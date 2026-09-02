@@ -8,6 +8,7 @@ import '../../presentation/item/item_details_screen.dart';
 import '../../presentation/report/report_item_screen.dart';
 import '../../presentation/my_posts/my_posts_screen.dart';
 import '../../presentation/profile/profile_screen.dart';
+import '../../presentation/item/edit_item_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -46,6 +47,14 @@ class AppRouter {
           settings: settings,
           builder: (_) => ItemDetailsScreen(item: item),
         );
+
+        case AppRoutes.editItem:
+  final LostFoundItem item = settings.arguments! as LostFoundItem;
+
+  return MaterialPageRoute<void>(
+    settings: settings,
+    builder: (_) => EditItemScreen(item: item),
+  );
 
         case AppRoutes.myPosts:
   return MaterialPageRoute<void>(
