@@ -141,14 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Profile',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Profile will be added in a later phase.',
-                  ),
-                ),
-              );
-            },
+  Navigator.of(context).pushNamed(AppRoutes.profile);
+},
             icon: const Icon(Icons.person_outline),
           ),
         ],

@@ -7,6 +7,7 @@ import '../../presentation/home/home_screen.dart';
 import '../../presentation/item/item_details_screen.dart';
 import '../../presentation/report/report_item_screen.dart';
 import '../../presentation/my_posts/my_posts_screen.dart';
+import '../../presentation/profile/profile_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -50,6 +51,12 @@ class AppRouter {
   return MaterialPageRoute<void>(
     settings: settings,
     builder: (_) => const MyPostsScreen(),
+  );
+
+  case AppRoutes.profile:
+  return MaterialPageRoute<void>(
+    settings: settings,
+    builder: (_) => ProfileScreen(),
   );
 
       default:
