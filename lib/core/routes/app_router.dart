@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../data/models/lost_found_item.dart';
 import '../../presentation/auth/login_screen.dart';
 import '../../presentation/auth/splash_screen.dart';
 import '../../presentation/home/home_screen.dart';
+import '../../presentation/item/item_details_screen.dart';
 import '../../presentation/report/report_item_screen.dart';
 import 'app_routes.dart';
 
@@ -29,11 +31,19 @@ class AppRouter {
           builder: (_) => const HomeScreen(),
         );
 
-        case AppRoutes.reportItem:
-  return MaterialPageRoute<void>(
-    settings: settings,
-    builder: (_) => const ReportItemScreen(),
-  );
+      case AppRoutes.reportItem:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const ReportItemScreen(),
+        );
+
+      case AppRoutes.itemDetails:
+        final LostFoundItem item = settings.arguments! as LostFoundItem;
+
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => ItemDetailsScreen(item: item),
+        );
 
       default:
         return MaterialPageRoute<void>(

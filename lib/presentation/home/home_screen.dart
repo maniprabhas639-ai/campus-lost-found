@@ -388,12 +388,11 @@ class _ItemCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${item.title} details coming soon.'),
-            ),
-          );
-        },
+  Navigator.of(context).pushNamed(
+    AppRoutes.itemDetails,
+    arguments: item,
+  );
+},
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
