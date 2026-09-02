@@ -13,6 +13,7 @@ class LostFoundItem {
     required this.location,
     required this.date,
     this.imageUrl,
+    this.ownerId,
   });
 
   final String id;
@@ -23,6 +24,7 @@ class LostFoundItem {
   final String location;
   final String date;
   final String? imageUrl;
+  final String? ownerId;
 
   String get typeLabel {
     switch (type) {
