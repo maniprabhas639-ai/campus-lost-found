@@ -55,6 +55,7 @@ class FirestoreService {
       'location': location.trim(),
       'date': date,
       'ownerId': ownerId,
+      'status': 'active',
     };
 
     if (imageUrl != null && imageUrl.trim().isNotEmpty) {
@@ -83,6 +84,15 @@ class FirestoreService {
     };
 
     await _itemsCollection.doc(itemId).update(data);
+  }
+
+  Future<void> updateItemStatus({
+    required String itemId,
+    required LostFoundStatus status,
+  }) async {
+    await _itemsCollection.doc(itemId).update({
+      'status': status == LostFoundStatus.resolved ? 'resolved' : 'active',
+    });
   }
 
   Future<void> deleteItem({

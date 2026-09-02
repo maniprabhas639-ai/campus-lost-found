@@ -21,7 +21,71 @@ class ItemDetailsScreen extends StatefulWidget {
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
 
+  late LostFoundStatus _status;
+
   bool _isDeleting = false;
+  bool _isUpdatingStatus = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _status = widget.item.status;
+  }
+
+  Future<void> _updateStatus(LostFoundStatus newStatus) async {
+    if (_isDeleting || _isUpdatingStatus || newStatus == _status) {
+      return;
+    }
+
+    setState(() {
+      _isUpdatingStatus = true;
+    });
+
+    try {
+      await _firestoreService.updateItemStatus(
+        itemId: widget.item.id,
+        status: newStatus,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _status = newStatus;
+        _isUpdatingStatus = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus == LostFoundStatus.resolved
+                ? 'Item marked as resolved.'
+                : 'Item marked as active.',
+          ),
+        ),
+      );
+    } catch (error) {
+      debugPrint('UPDATE ITEM STATUS FIRESTORE ERROR: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isUpdatingStatus = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to update the item status. Please try again.',
+          ),
+        ),
+      );
+    }
+  }
 
   Future<void> _deleteItem() async {
     final bool? shouldDelete = await showDialog<bool>(
@@ -100,9 +164,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   Widget build(BuildContext context) {
     final LostFoundItem item = widget.item;
     final bool isLost = item.type == LostFoundType.lost;
+    final bool isResolved = _status == LostFoundStatus.resolved;
+
     final User? currentUser = FirebaseAuth.instance.currentUser;
     final bool isOwner =
         currentUser != null && currentUser.uid == item.ownerId;
+
+    final bool isBusy = _isDeleting || _isUpdatingStatus;
 
     return Scaffold(
       appBar: AppBar(
@@ -110,7 +178,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         actions: [
           if (isOwner) ...[
             IconButton(
-              onPressed: _isDeleting
+              onPressed: isBusy
                   ? null
                   : () {
                       Navigator.of(context).pushNamed(
@@ -122,7 +190,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               tooltip: 'Edit Item',
             ),
             IconButton(
-              onPressed: _isDeleting ? null : _deleteItem,
+              onPressed: isBusy ? null : _deleteItem,
               icon: _isDeleting
                   ? const SizedBox(
                       width: 20,
@@ -196,6 +264,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            _StatusBadge(
+              status: _status,
+            ),
             const SizedBox(height: 16),
             Text(
               item.title,
@@ -227,7 +299,99 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                 value: item.ownerId!,
               ),
             ],
+            if (isOwner) ...[
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Item Status',
+                        style: AppTextStyles.headingMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isResolved
+                            ? 'This item has been resolved.'
+                            : 'This item is currently active.',
+                        style: AppTextStyles.bodyMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: isBusy
+                              ? null
+                              : () {
+                                  _updateStatus(
+                                    isResolved
+                                        ? LostFoundStatus.active
+                                        : LostFoundStatus.resolved,
+                                  );
+                                },
+                          icon: _isUpdatingStatus
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(
+                                  isResolved
+                                      ? Icons.refresh
+                                      : Icons.check_circle_outline,
+                                ),
+                          label: Text(
+                            _isUpdatingStatus
+                                ? 'Updating...'
+                                : isResolved
+                                    ? 'Mark as Active'
+                                    : 'Mark as Resolved',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.status,
+  });
+
+  final LostFoundStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isResolved = status == LostFoundStatus.resolved;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: isResolved
+            ? Colors.green.withValues(alpha: 0.12)
+            : Colors.orange.withValues(alpha: 0.12),
+      ),
+      child: Text(
+        status == LostFoundStatus.resolved ? 'Resolved' : 'Active',
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: isResolved ? Colors.green : Colors.orange,
         ),
       ),
     );
