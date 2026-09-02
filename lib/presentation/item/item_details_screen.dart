@@ -50,6 +50,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   }
 
   Future<void> _reloadItem() async {
+    if (_isRefreshingItem || _isDeleting || _isUpdatingStatus) {
+      return;
+    }
+
     setState(() {
       _isRefreshingItem = true;
     });
@@ -166,6 +170,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   }
 
   Future<void> _deleteItem() async {
+    if (_isDeleting || _isUpdatingStatus || _isRefreshingItem) {
+      return;
+    }
+
     final bool? shouldDelete = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -280,6 +288,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       ),
       body: SafeArea(
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
             _buildImageSection(item),

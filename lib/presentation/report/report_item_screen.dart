@@ -15,10 +15,8 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController =
-      TextEditingController();
-  final TextEditingController _locationController =
-      TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
 
   final FirestoreService _firestoreService = FirestoreService();
@@ -40,6 +38,10 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
   }
 
   Future<void> _selectDate() async {
+    if (_isSubmitting) {
+      return;
+    }
+
     final DateTime now = DateTime.now();
 
     final DateTime? pickedDate = await showDatePicker(
@@ -63,13 +65,23 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) {
+    if (_isSubmitting) {
+      return;
+    }
+
+    final FormState? formState = _formKey.currentState;
+
+    if (formState == null || !formState.validate()) {
       return;
     }
 
     final User? currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser == null) {
+      if (!mounted) {
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('You must be signed in to report an item.'),
@@ -77,6 +89,8 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
       );
       return;
     }
+
+    FocusScope.of(context).unfocus();
 
     setState(() {
       _isSubmitting = true;
@@ -98,24 +112,20 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Item reported successfully.'),
-        ),
+        const SnackBar(content: Text('Item reported successfully.')),
       );
 
       Navigator.of(context).pop();
     } catch (error) {
+      debugPrint('REPORT ITEM FIRESTORE ERROR: $error');
+
       if (!mounted) {
         return;
       }
 
-      debugPrint('REPORT ITEM FIRESTORE ERROR: $error');
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Unable to report item. Please try again.',
-          ),
+          content: Text('Unable to report item. Please try again.'),
         ),
       );
     } finally {
@@ -130,13 +140,12 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Report Item'),
-      ),
+      appBar: AppBar(title: const Text('Report Item')),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
               Text(
@@ -149,10 +158,7 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                 style: AppTextStyles.bodyMedium,
               ),
               const SizedBox(height: 24),
-              Text(
-                'Item Type',
-                style: AppTextStyles.headingMedium,
-              ),
+              Text('Item Type', style: AppTextStyles.headingMedium),
               const SizedBox(height: 8),
               SegmentedButton<String>(
                 segments: const [
@@ -206,14 +212,8 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                     value: 'Electronics',
                     child: Text('Electronics'),
                   ),
-                  DropdownMenuItem(
-                    value: 'Bags',
-                    child: Text('Bags'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Books',
-                    child: Text('Books'),
-                  ),
+                  DropdownMenuItem(value: 'Bags', child: Text('Bags')),
+                  DropdownMenuItem(value: 'Books', child: Text('Books')),
                   DropdownMenuItem(
                     value: 'Documents',
                     child: Text('Documents'),
@@ -222,10 +222,7 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                     value: 'Accessories',
                     child: Text('Accessories'),
                   ),
-                  DropdownMenuItem(
-                    value: 'Other',
-                    child: Text('Other'),
-                  ),
+                  DropdownMenuItem(value: 'Other', child: Text('Other')),
                 ],
                 onChanged: _isSubmitting
                     ? null
@@ -264,7 +261,7 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                 controller: _dateController,
                 enabled: !_isSubmitting,
                 readOnly: true,
-                onTap: _selectDate,
+                onTap: _isSubmitting ? null : _selectDate,
                 decoration: const InputDecoration(
                   labelText: 'Date',
                   hintText: 'Select date',
@@ -306,9 +303,7 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.send_outlined),
                   label: Text(

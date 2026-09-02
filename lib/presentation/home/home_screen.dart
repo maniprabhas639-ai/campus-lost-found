@@ -24,6 +24,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<LostFoundItem> _items = <LostFoundItem>[];
   bool _isLoading = true;
+  bool _isRefreshing = false;
+  bool _hasLoadedOnce = false;
   String? _errorMessage;
 
   @override
@@ -35,10 +37,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadItems() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (_isRefreshing) {
+      return;
+    }
+
+    final bool isInitialLoad = !_hasLoadedOnce;
+
+    if (mounted) {
+      setState(() {
+        if (isInitialLoad) {
+          _isLoading = true;
+        } else {
+          _isRefreshing = true;
+        }
+
+        _errorMessage = null;
+      });
+    }
 
     try {
       final List<LostFoundItem> items = await _firestoreService.getItems();
@@ -50,18 +65,22 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _items = items;
         _isLoading = false;
+        _isRefreshing = false;
+        _hasLoadedOnce = true;
+        _errorMessage = null;
       });
     } catch (error) {
+      debugPrint('HOME FIRESTORE ERROR: $error');
+
       if (!mounted) {
         return;
       }
 
       setState(() {
         _isLoading = false;
+        _isRefreshing = false;
         _errorMessage = 'Unable to load items. Please try again.';
       });
-
-      debugPrint('HOME FIRESTORE ERROR: $error');
     }
   }
 
@@ -202,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 12),
               if (_isLoading)
                 _buildLoadingState()
-              else if (_errorMessage != null)
+              else if (items.isEmpty && _errorMessage != null)
                 _buildErrorState()
               else if (items.isEmpty)
                 _buildEmptyState()
@@ -216,6 +235,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+              if (_isRefreshing) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'Refreshing items...',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ),
+              ],
+              if (!_isRefreshing &&
+                  _errorMessage != null &&
+                  _items.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _buildRefreshErrorState(),
+              ],
             ],
           ),
         ),
@@ -530,6 +564,26 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _loadItems,
               child: const Text('Try Again'),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRefreshErrorState() {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          children: [
+            const Icon(Icons.cloud_off_outlined, color: AppColors.error),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(_errorMessage!, style: AppTextStyles.bodySmall),
+            ),
+            const SizedBox(width: 8),
+            TextButton(onPressed: _loadItems, child: const Text('Retry')),
           ],
         ),
       ),
