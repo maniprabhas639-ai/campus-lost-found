@@ -23,6 +23,20 @@ class FirestoreService {
         .toList();
   }
 
+  Future<List<LostFoundItem>> getItemsByOwner(String ownerId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _itemsCollection
+            .where('ownerId', isEqualTo: ownerId)
+            .get();
+
+    return snapshot.docs
+        .map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> document) =>
+              LostFoundItem.fromFirestore(document),
+        )
+        .toList();
+  }
+
   Future<void> createItem({
     required String title,
     required String description,

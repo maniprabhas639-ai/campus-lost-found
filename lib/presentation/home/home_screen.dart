@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/routes/app_routes.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
@@ -105,14 +105,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _showReportMessage() async {
-  await Navigator.of(context).pushNamed(AppRoutes.reportItem);
+    await Navigator.of(context).pushNamed(AppRoutes.reportItem);
 
-  if (!mounted) {
-    return;
+    if (!mounted) {
+      return;
+    }
+
+    await _loadItems();
   }
-
-  await _loadItems();
-}
 
   @override
   void dispose() {
@@ -131,6 +131,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Campus Lost & Found'),
         actions: [
+          IconButton(
+            tooltip: 'My Posts',
+            onPressed: () {
+              Navigator.of(context).pushNamed(AppRoutes.myPosts);
+            },
+            icon: const Icon(Icons.inventory_2_outlined),
+          ),
           IconButton(
             tooltip: 'Profile',
             onPressed: () {
@@ -388,11 +395,11 @@ class _ItemCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-  Navigator.of(context).pushNamed(
-    AppRoutes.itemDetails,
-    arguments: item,
-  );
-},
+          Navigator.of(context).pushNamed(
+            AppRoutes.itemDetails,
+            arguments: item,
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
