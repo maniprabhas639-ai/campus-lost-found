@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/routes/app_routes.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
@@ -103,13 +104,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Student';
   }
 
-  void _showReportMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report Item will be available in the next phase.'),
-      ),
-    );
+  Future<void> _showReportMessage() async {
+  await Navigator.of(context).pushNamed(AppRoutes.reportItem);
+
+  if (!mounted) {
+    return;
   }
+
+  await _loadItems();
+}
 
   @override
   void dispose() {

@@ -22,4 +22,31 @@ class FirestoreService {
         )
         .toList();
   }
+
+  Future<void> createItem({
+    required String title,
+    required String description,
+    required String category,
+    required String type,
+    required String location,
+    required String date,
+    required String ownerId,
+    String? imageUrl,
+  }) async {
+    final Map<String, dynamic> data = <String, dynamic>{
+      'title': title.trim(),
+      'description': description.trim(),
+      'category': category,
+      'type': type,
+      'location': location.trim(),
+      'date': date,
+      'ownerId': ownerId,
+    };
+
+    if (imageUrl != null && imageUrl.trim().isNotEmpty) {
+      data['imageUrl'] = imageUrl.trim();
+    }
+
+    await _itemsCollection.add(data);
+  }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../presentation/auth/login_screen.dart';
 import '../../presentation/auth/splash_screen.dart';
 import '../../presentation/home/home_screen.dart';
+import '../../presentation/report/report_item_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -27,6 +28,12 @@ class AppRouter {
           settings: settings,
           builder: (_) => const HomeScreen(),
         );
+
+        case AppRoutes.reportItem:
+  return MaterialPageRoute<void>(
+    settings: settings,
+    builder: (_) => const ReportItemScreen(),
+  );
 
       default:
         return MaterialPageRoute<void>(
