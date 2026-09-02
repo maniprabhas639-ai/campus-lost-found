@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
@@ -70,6 +71,19 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
         _errorMessage = 'Unable to load your posts. Please try again.';
       });
     }
+  }
+
+  Future<void> _openItemDetails(LostFoundItem item) async {
+    await Navigator.of(context).pushNamed(
+      AppRoutes.itemDetails,
+      arguments: item,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await _loadMyPosts();
   }
 
   @override
@@ -180,6 +194,8 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
               ),
             ),
             isThreeLine: true,
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openItemDetails(item),
           ),
         );
       },

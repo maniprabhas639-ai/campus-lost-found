@@ -63,4 +63,31 @@ class FirestoreService {
 
     await _itemsCollection.add(data);
   }
+
+  Future<void> updateItem({
+    required String itemId,
+    required String title,
+    required String description,
+    required String category,
+    required String type,
+    required String location,
+    required String date,
+  }) async {
+    final Map<String, dynamic> data = <String, dynamic>{
+      'title': title.trim(),
+      'description': description.trim(),
+      'category': category,
+      'type': type,
+      'location': location.trim(),
+      'date': date,
+    };
+
+    await _itemsCollection.doc(itemId).update(data);
+  }
+
+  Future<void> deleteItem({
+    required String itemId,
+  }) async {
+    await _itemsCollection.doc(itemId).delete();
+  }
 }

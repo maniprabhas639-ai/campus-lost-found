@@ -1,9 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/lost_found_item.dart';
+import '../../data/services/firestore_service.dart';
 
-class ItemDetailsScreen extends StatelessWidget {
+class ItemDetailsScreen extends StatefulWidget {
   const ItemDetailsScreen({
     required this.item,
     super.key,
@@ -12,12 +15,127 @@ class ItemDetailsScreen extends StatelessWidget {
   final LostFoundItem item;
 
   @override
+  State<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
+}
+
+class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
+
+  bool _isDeleting = false;
+
+  Future<void> _deleteItem() async {
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Item?'),
+          content: const Text(
+            'Are you sure you want to delete this item? '
+            'This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      await _firestoreService.deleteItem(
+        itemId: widget.item.id,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item deleted successfully.'),
+        ),
+      );
+
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      debugPrint('DELETE ITEM FIRESTORE ERROR: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isDeleting = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to delete the item. Please try again.',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final LostFoundItem item = widget.item;
     final bool isLost = item.type == LostFoundType.lost;
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    final bool isOwner =
+        currentUser != null && currentUser.uid == item.ownerId;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Item Details'),
+        actions: [
+          if (isOwner) ...[
+            IconButton(
+              onPressed: _isDeleting
+                  ? null
+                  : () {
+                      Navigator.of(context).pushNamed(
+                        AppRoutes.editItem,
+                        arguments: item,
+                      );
+                    },
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit Item',
+            ),
+            IconButton(
+              onPressed: _isDeleting ? null : _deleteItem,
+              icon: _isDeleting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.delete_outline),
+              tooltip: 'Delete Item',
+            ),
+          ],
+        ],
       ),
       body: SafeArea(
         child: ListView(
