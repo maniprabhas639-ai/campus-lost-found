@@ -11,18 +11,31 @@ class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.splash:
-        return MaterialPageRoute(builder: (_) => const SplashScreen());
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const SplashScreen(),
+        );
 
       case AppRoutes.login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const LoginScreen(),
+        );
 
       case AppRoutes.home:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const HomeScreen(),
+        );
 
       default:
-        return MaterialPageRoute(
-          builder: (_) =>
-              const Scaffold(body: Center(child: Text('Route not found'))),
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const Scaffold(
+            body: Center(
+              child: Text('Route not found'),
+            ),
+          ),
         );
     }
   }
