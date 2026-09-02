@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
 class EditItemScreen extends StatefulWidget {
-  const EditItemScreen({
-    super.key,
-    required this.item,
-  });
+  const EditItemScreen({super.key, required this.item});
 
   final LostFoundItem item;
 
@@ -44,8 +43,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
     super.initState();
 
     _titleController = TextEditingController(text: widget.item.title);
-    _descriptionController =
-        TextEditingController(text: widget.item.description);
+    _descriptionController = TextEditingController(
+      text: widget.item.description,
+    );
     _locationController = TextEditingController(text: widget.item.location);
     _dateController = TextEditingController(text: widget.item.date);
 
@@ -76,11 +76,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
       lastDate: DateTime(2100),
     );
 
-    if (pickedDate == null) {
-      return;
-    }
-
-    if (!mounted) {
+    if (pickedDate == null || !mounted) {
       return;
     }
 
@@ -130,9 +126,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
         location.isEmpty ||
         date.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all fields.'),
-        ),
+        const SnackBar(content: Text('Please fill in all fields.')),
       );
       return;
     }
@@ -157,9 +151,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Item updated successfully.'),
-        ),
+        const SnackBar(content: Text('Item updated successfully.')),
       );
 
       Navigator.of(context).pop(true);
@@ -172,9 +164,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Unable to update the item. Please try again.',
-          ),
+          content: Text('Unable to update the item. Please try again.'),
         ),
       );
     } finally {
@@ -189,115 +179,142 @@ class _EditItemScreenState extends State<EditItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Item'),
-      ),
+      appBar: AppBar(title: const Text('Edit Item')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Item Type',
-                style: Theme.of(context).textTheme.titleMedium,
+                'Update your item details',
+                style: AppTextStyles.headingMedium,
               ),
-              const SizedBox(height: 10),
-              SegmentedButton<LostFoundType>(
-                segments: const [
-                  ButtonSegment<LostFoundType>(
-                    value: LostFoundType.lost,
-                    label: Text('Lost'),
-                    icon: Icon(Icons.search_off),
-                  ),
-                  ButtonSegment<LostFoundType>(
-                    value: LostFoundType.found,
-                    label: Text('Found'),
-                    icon: Icon(Icons.check_circle_outline),
-                  ),
-                ],
-                selected: <LostFoundType>{_selectedType},
-                onSelectionChanged: _isSaving
-                    ? null
-                    : (Set<LostFoundType> selection) {
-                        setState(() {
-                          _selectedType = selection.first;
-                        });
-                      },
+              const SizedBox(height: 6),
+              Text(
+                'Make sure the information is accurate before saving.',
+                style: AppTextStyles.bodyMedium,
               ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _titleController,
-                enabled: !_isSaving,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Item Title',
-                  hintText: 'e.g. Black Backpack',
-                  border: OutlineInputBorder(),
+              const SizedBox(height: 20),
+              _buildSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Item Type', style: AppTextStyles.labelMedium),
+                    const SizedBox(height: 10),
+                    SegmentedButton<LostFoundType>(
+                      segments: const [
+                        ButtonSegment<LostFoundType>(
+                          value: LostFoundType.lost,
+                          label: Text('Lost'),
+                          icon: Icon(Icons.help_outline_rounded),
+                        ),
+                        ButtonSegment<LostFoundType>(
+                          value: LostFoundType.found,
+                          label: Text('Found'),
+                          icon: Icon(Icons.check_circle_outline_rounded),
+                        ),
+                      ],
+                      selected: <LostFoundType>{_selectedType},
+                      onSelectionChanged: _isSaving
+                          ? null
+                          : (Set<LostFoundType> selection) {
+                              setState(() {
+                                _selectedType = selection.first;
+                              });
+                            },
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _descriptionController,
-                enabled: !_isSaving,
-                maxLines: 4,
-                textInputAction: TextInputAction.newline,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  hintText: 'Describe the item',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
+              const SizedBox(height: 12),
+              _buildSectionCard(
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _titleController,
+                      enabled: !_isSaving,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'Item Title',
+                        hintText: 'e.g. Black Backpack',
+                        prefixIcon: Icon(Icons.inventory_2_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _descriptionController,
+                      enabled: !_isSaving,
+                      maxLines: 4,
+                      textInputAction: TextInputAction.newline,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        hintText: 'Describe the item',
+                        prefixIcon: Padding(
+                          padding: EdgeInsets.only(bottom: 52),
+                          child: Icon(Icons.description_outlined),
+                        ),
+                        alignLabelWithHint: true,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(),
-                ),
-                items: _categories.map((String category) {
-                  return DropdownMenuItem<String>(
-                    value: category,
-                    child: Text(category),
-                  );
-                }).toList(),
-                onChanged: _isSaving
-                    ? null
-                    : (String? value) {
-                        if (value == null) {
-                          return;
-                        }
+              const SizedBox(height: 12),
+              _buildSectionCard(
+                child: Column(
+                  children: [
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedCategory,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        prefixIcon: Icon(Icons.category_outlined),
+                      ),
+                      items: _categories.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Text(category),
+                        );
+                      }).toList(),
+                      onChanged: _isSaving
+                          ? null
+                          : (String? value) {
+                              if (value == null) {
+                                return;
+                              }
 
-                        setState(() {
-                          _selectedCategory = value;
-                        });
-                      },
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _locationController,
-                enabled: !_isSaving,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Location',
-                  hintText: 'Where was it lost or found?',
-                  border: OutlineInputBorder(),
+                              setState(() {
+                                _selectedCategory = value;
+                              });
+                            },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _locationController,
+                      enabled: !_isSaving,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'Location',
+                        hintText: 'Where was it lost or found?',
+                        prefixIcon: Icon(Icons.location_on_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _dateController,
+                      enabled: !_isSaving,
+                      readOnly: true,
+                      onTap: _isSaving ? null : _selectDate,
+                      decoration: const InputDecoration(
+                        labelText: 'Date',
+                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                        suffixIcon: Icon(Icons.edit_calendar_outlined),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _dateController,
-                enabled: !_isSaving,
-                readOnly: true,
-                onTap: _isSaving ? null : _selectDate,
-                decoration: const InputDecoration(
-                  labelText: 'Date',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today_outlined),
-                ),
-              ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               SizedBox(
                 height: 52,
                 child: FilledButton.icon(
@@ -306,20 +323,28 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(
-                    _isSaving ? 'Saving...' : 'Save Changes',
-                  ),
+                  label: Text(_isSaving ? 'Saving...' : 'Save Changes'),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionCard({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: child,
     );
   }
 }

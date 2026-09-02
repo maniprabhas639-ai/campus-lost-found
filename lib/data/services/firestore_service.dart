@@ -4,7 +4,7 @@ import '../models/lost_found_item.dart';
 
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -12,8 +12,8 @@ class FirestoreService {
       _firestore.collection('lost_found_items');
 
   Future<List<LostFoundItem>> getItems() async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _itemsCollection.get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
+        .get();
 
     return snapshot.docs
         .map(
@@ -23,11 +23,21 @@ class FirestoreService {
         .toList();
   }
 
+  Future<LostFoundItem?> getItemById(String itemId) async {
+    final DocumentSnapshot<Map<String, dynamic>> document =
+        await _itemsCollection.doc(itemId).get();
+
+    if (!document.exists) {
+      return null;
+    }
+
+    return LostFoundItem.fromFirestore(document);
+  }
+
   Future<List<LostFoundItem>> getItemsByOwner(String ownerId) async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _itemsCollection
-            .where('ownerId', isEqualTo: ownerId)
-            .get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
+        .where('ownerId', isEqualTo: ownerId)
+        .get();
 
     return snapshot.docs
         .map(
@@ -95,9 +105,7 @@ class FirestoreService {
     });
   }
 
-  Future<void> deleteItem({
-    required String itemId,
-  }) async {
+  Future<void> deleteItem({required String itemId}) async {
     await _itemsCollection.doc(itemId).delete();
   }
 }

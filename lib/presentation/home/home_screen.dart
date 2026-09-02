@@ -140,6 +140,17 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadItems();
   }
 
+  Future<void> _openItemDetails(LostFoundItem item) async {
+    await Navigator.of(context)
+        .pushNamed(AppRoutes.itemDetails, arguments: item);
+
+    if (!mounted) {
+      return;
+    }
+
+    await _loadItems();
+  }
+
   @override
   void dispose() {
     _searchController
@@ -199,7 +210,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ...items.map(
                   (item) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _ItemCard(item: item),
+                    child: _ItemCard(
+                      item: item,
+                      onTap: () => _openItemDetails(item),
+                    ),
                   ),
                 ),
             ],
@@ -575,9 +589,10 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _ItemCard extends StatelessWidget {
-  const _ItemCard({required this.item});
+  const _ItemCard({required this.item, required this.onTap});
 
   final LostFoundItem item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -587,10 +602,7 @@ class _ItemCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          Navigator.of(context)
-              .pushNamed(AppRoutes.itemDetails, arguments: item);
-        },
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
