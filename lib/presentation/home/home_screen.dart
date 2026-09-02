@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
 
   LostFoundType? _selectedType;
+  LostFoundStatus? _selectedStatus;
   String _searchQuery = '';
 
   List<LostFoundItem> _items = <LostFoundItem>[];
@@ -72,19 +73,46 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<LostFoundItem> get _filteredItems {
-    return _items.where((item) {
+    final List<String> searchTerms = _searchQuery
+        .split(RegExp(r'\s+'))
+        .where((String term) => term.isNotEmpty)
+        .toList();
+
+    return _items.where((LostFoundItem item) {
       final bool matchesType =
           _selectedType == null || item.type == _selectedType;
 
-      final bool matchesSearch =
-          _searchQuery.isEmpty ||
-          item.title.toLowerCase().contains(_searchQuery) ||
-          item.description.toLowerCase().contains(_searchQuery) ||
-          item.category.toLowerCase().contains(_searchQuery) ||
-          item.location.toLowerCase().contains(_searchQuery);
+      final bool matchesStatus =
+          _selectedStatus == null || item.status == _selectedStatus;
 
-      return matchesType && matchesSearch;
+      final String searchableText = [
+        item.title,
+        item.description,
+        item.category,
+        item.location,
+      ].join(' ').toLowerCase();
+
+      final bool matchesSearch = searchTerms.every(
+        (String term) => searchableText.contains(term),
+      );
+
+      return matchesType && matchesStatus && matchesSearch;
     }).toList();
+  }
+
+  bool get _hasActiveFilters {
+    return _searchQuery.isNotEmpty ||
+        _selectedType != null ||
+        _selectedStatus != null;
+  }
+
+  void _clearSearchAndFilters() {
+    _searchController.clear();
+
+    setState(() {
+      _selectedType = null;
+      _selectedStatus = null;
+    });
   }
 
   String get _userName {
@@ -141,8 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Profile',
             onPressed: () {
-  Navigator.of(context).pushNamed(AppRoutes.profile);
-},
+              Navigator.of(context).pushNamed(AppRoutes.profile);
+            },
             icon: const Icon(Icons.person_outline),
           ),
         ],
@@ -158,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
               _buildSearchField(),
               const SizedBox(height: 16),
-              _buildFilterChips(),
+              _buildFilterSection(),
               const SizedBox(height: 24),
               _buildSectionHeader(items.length),
               const SizedBox(height: 12),
@@ -214,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
       controller: _searchController,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Search lost or found items',
+        hintText: 'Search title, description, location...',
         prefixIcon: const Icon(Icons.search),
         suffixIcon: _searchQuery.isNotEmpty
             ? IconButton(
@@ -227,46 +255,104 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildFilterChip(
-            label: 'All',
-            selected: _selectedType == null,
-            onSelected: (_) {
-              setState(() {
-                _selectedType = null;
-              });
-            },
-          ),
-          const SizedBox(width: 8),
-          _buildFilterChip(
-            label: 'Lost',
-            selected: _selectedType == LostFoundType.lost,
-            onSelected: (_) {
-              setState(() {
-                _selectedType = LostFoundType.lost;
-              });
-            },
-          ),
-          const SizedBox(width: 8),
-          _buildFilterChip(
-            label: 'Found',
-            selected: _selectedType == LostFoundType.found,
-            onSelected: (_) {
-              setState(() {
-                _selectedType = LostFoundType.found;
-              });
-            },
-          ),
-        ],
-      ),
+  Widget _buildFilterSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Type',
+          style: AppTextStyles.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildFilterChip(
+              label: 'All',
+              selected: _selectedType == null,
+              onSelected: (_) {
+                setState(() {
+                  _selectedType = null;
+                });
+              },
+            ),
+            _buildFilterChip(
+              label: 'Lost',
+              selected: _selectedType == LostFoundType.lost,
+              onSelected: (_) {
+                setState(() {
+                  _selectedType = LostFoundType.lost;
+                });
+              },
+            ),
+            _buildFilterChip(
+              label: 'Found',
+              selected: _selectedType == LostFoundType.found,
+              onSelected: (_) {
+                setState(() {
+                  _selectedType = LostFoundType.found;
+                });
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Status',
+          style: AppTextStyles.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildStatusFilterChip(
+              label: 'All statuses',
+              selected: _selectedStatus == null,
+              onSelected: (_) {
+                setState(() {
+                  _selectedStatus = null;
+                });
+              },
+            ),
+            _buildStatusFilterChip(
+              label: 'Active',
+              selected: _selectedStatus == LostFoundStatus.active,
+              onSelected: (_) {
+                setState(() {
+                  _selectedStatus = LostFoundStatus.active;
+                });
+              },
+            ),
+            _buildStatusFilterChip(
+              label: 'Resolved',
+              selected: _selectedStatus == LostFoundStatus.resolved,
+              onSelected: (_) {
+                setState(() {
+                  _selectedStatus = LostFoundStatus.resolved;
+                });
+              },
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildFilterChip({
+    required String label,
+    required bool selected,
+    required ValueChanged<bool> onSelected,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: onSelected,
+    );
+  }
+
+  Widget _buildStatusFilterChip({
     required String label,
     required bool selected,
     required ValueChanged<bool> onSelected,
@@ -283,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Recent Items',
+          _hasActiveFilters ? 'Matching Items' : 'Recent Items',
           style: AppTextStyles.headingMedium,
         ),
         Text(
@@ -351,22 +437,33 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Icon(
-              Icons.search_off,
+              _hasActiveFilters ? Icons.filter_alt_off : Icons.search_off,
               size: 48,
               color: AppColors.textSecondary,
             ),
             const SizedBox(height: 16),
             Text(
-              'No items found',
+              _hasActiveFilters
+                  ? 'No matching items'
+                  : 'No items found',
               style: AppTextStyles.headingMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Try another search term or change the filter.',
+              _hasActiveFilters
+                  ? 'Try changing your search or filters.'
+                  : 'Items you report will appear here.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
+            if (_hasActiveFilters) ...[
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: _clearSearchAndFilters,
+                child: const Text('Clear Search & Filters'),
+              ),
+            ],
           ],
         ),
       ),
@@ -406,6 +503,7 @@ class _ItemCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
@@ -419,7 +517,7 @@ class _ItemCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _StatusBadge(
+                        _TypeBadge(
                           label: item.typeLabel,
                           isLost: isLost,
                         ),
@@ -451,6 +549,10 @@ class _ItemCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    _ResolutionBadge(
+                      status: item.status,
+                    ),
                   ],
                 ),
               ),
@@ -480,8 +582,8 @@ class _ItemCard extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
+class _TypeBadge extends StatelessWidget {
+  const _TypeBadge({
     required this.label,
     required this.isLost,
   });
@@ -511,6 +613,53 @@ class _StatusBadge extends StatelessWidget {
               ? AppColors.textPrimary
               : AppColors.primary,
         ),
+      ),
+    );
+  }
+}
+
+class _ResolutionBadge extends StatelessWidget {
+  const _ResolutionBadge({
+    required this.status,
+  });
+
+  final LostFoundStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isResolved = status == LostFoundStatus.resolved;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: isResolved
+            ? Colors.green.withValues(alpha: 0.12)
+            : Colors.orange.withValues(alpha: 0.12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isResolved
+                ? Icons.check_circle_outline
+                : Icons.circle_outlined,
+            size: 14,
+            color: isResolved ? Colors.green : Colors.orange,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            isResolved ? 'Resolved' : 'Active',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isResolved ? Colors.green : Colors.orange,
+            ),
+          ),
+        ],
       ),
     );
   }
