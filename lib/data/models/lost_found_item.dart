@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum LostFoundType {
   lost,
   found,
@@ -32,6 +34,34 @@ class LostFoundItem {
         return 'Lost';
       case LostFoundType.found:
         return 'Found';
+    }
+  }
+
+  factory LostFoundItem.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
+    final Map<String, dynamic> data = document.data() ?? <String, dynamic>{};
+
+    return LostFoundItem(
+      id: document.id,
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      category: data['category'] as String? ?? '',
+      type: _typeFromString(data['type'] as String?),
+      location: data['location'] as String? ?? '',
+      date: data['date'] as String? ?? '',
+      imageUrl: data['imageUrl'] as String?,
+      ownerId: data['ownerId'] as String?,
+    );
+  }
+
+  static LostFoundType _typeFromString(String? value) {
+    switch (value) {
+      case 'found':
+        return LostFoundType.found;
+      case 'lost':
+      default:
+        return LostFoundType.lost;
     }
   }
 }

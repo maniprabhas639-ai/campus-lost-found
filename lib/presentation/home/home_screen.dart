@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../data/mock_data.dart';
 import '../../data/models/lost_found_item.dart';
+import '../../data/services/firestore_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,14 +15,53 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FirestoreService _firestoreService = FirestoreService();
 
   LostFoundType? _selectedType;
   String _searchQuery = '';
 
+  List<LostFoundItem> _items = <LostFoundItem>[];
+  bool _isLoading = true;
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
+
     _searchController.addListener(_onSearchChanged);
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final List<LostFoundItem> items =
+          await _firestoreService.getItems();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _items = items;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Unable to load items. Please try again.';
+      });
+
+      debugPrint('HOME FIRESTORE ERROR: $error');
+    }
   }
 
   void _onSearchChanged() {
@@ -32,11 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<LostFoundItem> get _filteredItems {
-    return mockLostFoundItems.where((item) {
-      final matchesType =
+    return _items.where((item) {
+      final bool matchesType =
           _selectedType == null || item.type == _selectedType;
 
-      final matchesSearch =
+      final bool matchesSearch =
           _searchQuery.isEmpty ||
           item.title.toLowerCase().contains(_searchQuery) ||
           item.description.toLowerCase().contains(_searchQuery) ||
@@ -48,13 +87,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String get _userName {
-    final user = FirebaseAuth.instance.currentUser;
+    final User? user = FirebaseAuth.instance.currentUser;
 
-    if (user?.displayName != null && user!.displayName!.trim().isNotEmpty) {
+    if (user?.displayName != null &&
+        user!.displayName!.trim().isNotEmpty) {
       return user.displayName!.trim();
     }
 
-    final email = user?.email;
+    final String? email = user?.email;
 
     if (email != null && email.contains('@')) {
       return email.split('@').first;
@@ -82,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final items = _filteredItems;
+    final List<LostFoundItem> items = _filteredItems;
 
     return Scaffold(
       appBar: AppBar(
@@ -93,7 +133,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Profile will be added in a later phase.'),
+                  content: Text(
+                    'Profile will be added in a later phase.',
+                  ),
                 ),
               );
             },
@@ -103,15 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async {
-            await Future<void>.delayed(
-              const Duration(milliseconds: 300),
-            );
-
-            if (mounted) {
-              setState(() {});
-            }
-          },
+          onRefresh: _loadItems,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -124,7 +158,11 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
               _buildSectionHeader(items.length),
               const SizedBox(height: 12),
-              if (items.isEmpty)
+              if (_isLoading)
+                _buildLoadingState()
+              else if (_errorMessage != null)
+                _buildErrorState()
+              else if (items.isEmpty)
                 _buildEmptyState()
               else
                 ...items.map(
@@ -252,6 +290,53 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 40),
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 32,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 48,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Unable to load items',
+              style: AppTextStyles.headingMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage ??
+                  'Something went wrong. Please try again.',
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: _loadItems,
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Card(
       child: Padding(
@@ -294,7 +379,7 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLost = item.type == LostFoundType.lost;
+    final bool isLost = item.type == LostFoundType.lost;
 
     return Card(
       clipBehavior: Clip.antiAlias,
