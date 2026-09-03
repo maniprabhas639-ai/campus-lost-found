@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/constants/item_categories.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
@@ -18,8 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
 
-  LostFoundType? _selectedType;
+    LostFoundType? _selectedType;
   LostFoundStatus? _selectedStatus;
+  String? _selectedCategory;
   String _searchQuery = '';
 
   List<LostFoundItem> _items = <LostFoundItem>[];
@@ -103,6 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final bool matchesStatus =
           _selectedStatus == null || item.status == _selectedStatus;
 
+          final bool matchesCategory =
+          _selectedCategory == null || item.category == _selectedCategory;
+
       final String searchableText = [
         item.title,
         item.description,
@@ -114,22 +119,27 @@ class _HomeScreenState extends State<HomeScreen> {
         (String term) => searchableText.contains(term),
       );
 
-      return matchesType && matchesStatus && matchesSearch;
+      return matchesType &&
+          matchesStatus &&
+          matchesCategory &&
+          matchesSearch;
     }).toList();
   }
 
-  bool get _hasActiveFilters {
+    bool get _hasActiveFilters {
     return _searchQuery.isNotEmpty ||
         _selectedType != null ||
-        _selectedStatus != null;
+        _selectedStatus != null ||
+        _selectedCategory != null;
   }
 
-  void _clearSearchAndFilters() {
+    void _clearSearchAndFilters() {
     _searchController.clear();
 
     setState(() {
       _selectedType = null;
       _selectedStatus = null;
+      _selectedCategory = null;
     });
   }
 
@@ -433,6 +443,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   _selectedStatus = LostFoundStatus.resolved;
                 });
               },
+            ),
+          ],
+        ),
+
+                const SizedBox(height: 14),
+        Text('Category', style: AppTextStyles.bodySmall),
+        const SizedBox(height: 7),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildFilterChip(
+              label: 'All',
+              icon: Icons.grid_view_rounded,
+              selected: _selectedCategory == null,
+              onSelected: (_) {
+                setState(() {
+                  _selectedCategory = null;
+                });
+              },
+            ),
+            ...ItemCategories.values.map(
+              (String category) => _buildFilterChip(
+                label: category,
+                icon: Icons.category_outlined,
+                selected: _selectedCategory == category,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedCategory = category;
+                  });
+                },
+              ),
             ),
           ],
         ),

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_text_styles.dart';
+import '../../core/constants/item_categories.dart';
 import '../../data/services/firestore_service.dart';
 
 class ReportItemScreen extends StatefulWidget {
@@ -207,23 +208,12 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category_outlined),
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Electronics',
-                    child: Text('Electronics'),
-                  ),
-                  DropdownMenuItem(value: 'Bags', child: Text('Bags')),
-                  DropdownMenuItem(value: 'Books', child: Text('Books')),
-                  DropdownMenuItem(
-                    value: 'Documents',
-                    child: Text('Documents'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Accessories',
-                    child: Text('Accessories'),
-                  ),
-                  DropdownMenuItem(value: 'Other', child: Text('Other')),
-                ],
+                items: ItemCategories.values.map((String category) {
+  return DropdownMenuItem<String>(
+    value: category,
+    child: Text(category),
+  );
+}).toList(),
                 onChanged: _isSubmitting
                     ? null
                     : (String? value) {

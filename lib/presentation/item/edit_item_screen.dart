@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/constants/item_categories.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
@@ -27,16 +28,6 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
   bool _isSaving = false;
 
-  final List<String> _categories = <String>[
-    'Electronics',
-    'Bags',
-    'Books',
-    'Clothing',
-    'Keys',
-    'Documents',
-    'Accessories',
-    'Other',
-  ];
 
   @override
   void initState() {
@@ -51,9 +42,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
     _selectedType = widget.item.type;
 
-    _selectedCategory = _categories.contains(widget.item.category)
-        ? widget.item.category
-        : 'Other';
+    _selectedCategory = ItemCategories.values.contains(widget.item.category)
+    ? widget.item.category
+    : 'Other';
   }
 
   @override
@@ -270,7 +261,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         labelText: 'Category',
                         prefixIcon: Icon(Icons.category_outlined),
                       ),
-                      items: _categories.map((String category) {
+                      items: ItemCategories.values.map((String category) {
                         return DropdownMenuItem<String>(
                           value: category,
                           child: Text(category),
