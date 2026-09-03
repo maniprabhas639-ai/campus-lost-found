@@ -1,36 +1,32 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
 
   final AuthService _authService = AuthService();
 
   bool _isLoading = false;
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _sendResetEmail() async {
     if (_isLoading) {
       return;
     }
@@ -48,20 +44,16 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _authService.signIn(
+      await _authService.sendPasswordResetEmail(
         email: _emailController.text.trim(),
-        password: _passwordController.text,
       );
 
       if (!mounted) {
         return;
       }
 
-      // Do not use authStateChanges() here for navigation.
-      // We already know sign-in succeeded.
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.home,
-        (Route<dynamic> route) => false,
+      _showMessage(
+        'Password reset email sent. Check your inbox.',
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) {
@@ -98,18 +90,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _getAuthErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
-      case 'invalid-credential':
-      case 'invalid-login-credentials':
-        return 'Invalid email or password.';
-
-      case 'user-disabled':
-        return 'This account has been disabled.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
 
       case 'user-not-found':
         return 'No account found with this email.';
 
-      case 'wrong-password':
-        return 'Incorrect password.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
 
       case 'too-many-requests':
         return 'Too many attempts. Please try again later.';
@@ -117,11 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
       case 'network-request-failed':
         return 'Network error. Check your internet connection.';
 
-      case 'invalid-email':
-        return 'Please enter a valid email address.';
-
       default:
-        return e.message ?? 'Login failed. Please try again.';
+        return e.message ??
+            'Unable to send password reset email. Please try again.';
     }
   }
 
@@ -129,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: const Text('Forgot Password'),
       ),
       body: SafeArea(
         child: Center(
@@ -141,18 +127,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Welcome Back',
+                    'Reset Your Password',
                     style: AppTextStyles.headingMedium,
                     textAlign: TextAlign.center,
                   ),
+
+                  const SizedBox(height: 16),
+
+                  const Text(
+                    'Enter your email address and we will send '
+                    'you a password reset link.',
+                    textAlign: TextAlign.center,
+                  ),
+
                   const SizedBox(height: 32),
 
                   TextFormField(
                     controller: _emailController,
                     enabled: !_isLoading,
                     keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
                     autocorrect: false,
+                    onFieldSubmitted: (_) => _sendResetEmail(),
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       hintText: 'Enter your email',
@@ -173,62 +169,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _passwordController,
-                    enabled: !_isLoading,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _login(),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              Navigator.of(context).pushNamed(
-                                AppRoutes.forgotPassword,
-                              );
-                            },
-                      child: const Text('Forgot Password?'),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
 
                   SizedBox(
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
+                      onPressed: _isLoading ? null : _sendResetEmail,
                       child: _isLoading
                           ? const SizedBox(
                               width: 22,
@@ -237,27 +183,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text('Login'),
+                          : const Text('Send Reset Email'),
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account?"),
-                      TextButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                Navigator.of(context).pushNamed(
-                                  AppRoutes.signup,
-                                );
-                              },
-                        child: const Text('Sign Up'),
-                      ),
-                    ],
+                  TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            Navigator.of(context).pop();
+                          },
+                    child: const Text('Back to Login'),
                   ),
                 ],
               ),

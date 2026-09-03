@@ -5,32 +5,36 @@ import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   final AuthService _authService = AuthService();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _signup() async {
     if (_isLoading) {
       return;
     }
@@ -48,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _authService.signIn(
+      await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -57,8 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Do not use authStateChanges() here for navigation.
-      // We already know sign-in succeeded.
       Navigator.of(context).pushNamedAndRemoveUntil(
         AppRoutes.home,
         (Route<dynamic> route) => false,
@@ -98,30 +100,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _getAuthErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
-      case 'invalid-credential':
-      case 'invalid-login-credentials':
-        return 'Invalid email or password.';
-
-      case 'user-disabled':
-        return 'This account has been disabled.';
-
-      case 'user-not-found':
-        return 'No account found with this email.';
-
-      case 'wrong-password':
-        return 'Incorrect password.';
-
-      case 'too-many-requests':
-        return 'Too many attempts. Please try again later.';
-
-      case 'network-request-failed':
-        return 'Network error. Check your internet connection.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email.';
 
       case 'invalid-email':
         return 'Please enter a valid email address.';
 
+      case 'weak-password':
+        return 'Password is too weak. Use at least 6 characters.';
+
+      case 'operation-not-allowed':
+        return 'Email/password registration is currently unavailable.';
+
+      case 'network-request-failed':
+        return 'Network error. Check your internet connection.';
+
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+
       default:
-        return e.message ?? 'Login failed. Please try again.';
+        return e.message ?? 'Sign up failed. Please try again.';
     }
   }
 
@@ -129,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: const Text('Sign Up'),
       ),
       body: SafeArea(
         child: Center(
@@ -141,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Welcome Back',
+                    'Create Account',
                     style: AppTextStyles.headingMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -179,11 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     enabled: !_isLoading,
                     obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _login(),
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      hintText: 'Enter your password',
+                      hintText: 'At least 6 characters',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         onPressed: _isLoading
@@ -202,33 +199,64 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return 'Please enter a password';
+                      }
+
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
                       }
 
                       return null;
                     },
                   ),
 
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              Navigator.of(context).pushNamed(
-                                AppRoutes.forgotPassword,
-                              );
-                            },
-                      child: const Text('Forgot Password?'),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    enabled: !_isLoading,
+                    obscureText: _obscureConfirmPassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _signup(),
+                    decoration: InputDecoration(
+                      labelText: 'Confirm Password',
+                      hintText: 'Re-enter your password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                      ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+
+                      if (value != _passwordController.text) {
+                        return 'Passwords do not match';
+                      }
+
+                      return null;
+                    },
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
 
                   SizedBox(
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
+                      onPressed: _isLoading ? null : _signup,
                       child: _isLoading
                           ? const SizedBox(
                               width: 22,
@@ -237,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text('Login'),
+                          : const Text('Create Account'),
                     ),
                   ),
 
@@ -246,16 +274,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don't have an account?"),
+                      const Text('Already have an account?'),
                       TextButton(
                         onPressed: _isLoading
                             ? null
                             : () {
-                                Navigator.of(context).pushNamed(
-                                  AppRoutes.signup,
-                                );
+                                Navigator.of(context).pop();
                               },
-                        child: const Text('Sign Up'),
+                        child: const Text('Login'),
                       ),
                     ],
                   ),
