@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/item_categories.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../../data/services/firestore_service.dart';
 
 class ReportItemScreen extends StatefulWidget {
@@ -16,7 +16,8 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _descriptionController =
+      TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
 
@@ -63,6 +64,68 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
           '${pickedDate.month.toString().padLeft(2, '0')}/'
           '${pickedDate.year}';
     });
+  }
+
+  String? _validateTitle(String? value) {
+    final String title = value?.trim() ?? '';
+
+    if (title.isEmpty) {
+      return 'Please enter an item title.';
+    }
+
+    if (title.length < 3) {
+      return 'Title must be at least 3 characters.';
+    }
+
+    if (title.length > 100) {
+      return 'Title must be 100 characters or less.';
+    }
+
+    return null;
+  }
+
+  String? _validateDescription(String? value) {
+    final String description = value?.trim() ?? '';
+
+    if (description.isEmpty) {
+      return 'Please enter a description.';
+    }
+
+    if (description.length < 10) {
+      return 'Description must be at least 10 characters.';
+    }
+
+    if (description.length > 500) {
+      return 'Description must be 500 characters or less.';
+    }
+
+    return null;
+  }
+
+  String? _validateDate(String? value) {
+    if (_selectedDate == null) {
+      return 'Please select a date.';
+    }
+
+    return null;
+  }
+
+  String? _validateLocation(String? value) {
+    final String location = value?.trim() ?? '';
+
+    if (location.isEmpty) {
+      return 'Please enter a location.';
+    }
+
+    if (location.length < 2) {
+      return 'Location must be at least 2 characters.';
+    }
+
+    if (location.length > 100) {
+      return 'Location must be 100 characters or less.';
+    }
+
+    return null;
   }
 
   Future<void> _submitForm() async {
@@ -113,7 +176,9 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Item reported successfully.')),
+        const SnackBar(
+          content: Text('Item reported successfully.'),
+        ),
       );
 
       Navigator.of(context).pop();
@@ -141,7 +206,9 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Report Item')),
+      appBar: AppBar(
+        title: const Text('Report Item'),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -159,7 +226,10 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                 style: AppTextStyles.bodyMedium,
               ),
               const SizedBox(height: 24),
-              Text('Item Type', style: AppTextStyles.headingMedium),
+              Text(
+                'Item Type',
+                style: AppTextStyles.headingMedium,
+              ),
               const SizedBox(height: 8),
               SegmentedButton<String>(
                 segments: const [
@@ -188,18 +258,13 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                 controller: _titleController,
                 enabled: !_isSubmitting,
                 textInputAction: TextInputAction.next,
+                maxLength: 100,
                 decoration: const InputDecoration(
                   labelText: 'Item title',
                   hintText: 'e.g. Black Backpack',
                   prefixIcon: Icon(Icons.inventory_2_outlined),
                 ),
-                validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter an item title.';
-                  }
-
-                  return null;
-                },
+                validator: _validateTitle,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -208,12 +273,14 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category_outlined),
                 ),
-                items: ItemCategories.values.map((String category) {
-  return DropdownMenuItem<String>(
-    value: category,
-    child: Text(category),
-  );
-}).toList(),
+                items: ItemCategories.values.map(
+                  (String category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  },
+                ).toList(),
                 onChanged: _isSubmitting
                     ? null
                     : (String? value) {
@@ -230,21 +297,16 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
               TextFormField(
                 controller: _descriptionController,
                 enabled: !_isSubmitting,
-                textInputAction: TextInputAction.next,
+                textInputAction: TextInputAction.newline,
                 maxLines: 4,
+                maxLength: 500,
                 decoration: const InputDecoration(
                   labelText: 'Description',
                   hintText: 'Describe the item...',
                   prefixIcon: Icon(Icons.description_outlined),
                   alignLabelWithHint: true,
                 ),
-                validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a description.';
-                  }
-
-                  return null;
-                },
+                validator: _validateDescription,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -258,31 +320,20 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                   prefixIcon: Icon(Icons.calendar_today_outlined),
                   suffixIcon: Icon(Icons.arrow_drop_down),
                 ),
-                validator: (_) {
-                  if (_selectedDate == null) {
-                    return 'Please select a date.';
-                  }
-
-                  return null;
-                },
+                validator: _validateDate,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _locationController,
                 enabled: !_isSubmitting,
                 textInputAction: TextInputAction.done,
+                maxLength: 100,
                 decoration: const InputDecoration(
                   labelText: 'Location',
                   hintText: 'e.g. Central Library',
                   prefixIcon: Icon(Icons.location_on_outlined),
                 ),
-                validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a location.';
-                  }
-
-                  return null;
-                },
+                validator: _validateLocation,
               ),
               const SizedBox(height: 28),
               SizedBox(
@@ -293,7 +344,9 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Icon(Icons.send_outlined),
                   label: Text(

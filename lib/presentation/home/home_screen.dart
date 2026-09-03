@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/constants/item_categories.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/constants/item_categories.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
 
-    LostFoundType? _selectedType;
+  LostFoundType? _selectedType;
   LostFoundStatus? _selectedStatus;
   String? _selectedCategory;
   String _searchQuery = '';
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final bool matchesStatus =
           _selectedStatus == null || item.status == _selectedStatus;
 
-          final bool matchesCategory =
+      final bool matchesCategory =
           _selectedCategory == null || item.category == _selectedCategory;
 
       final String searchableText = [
@@ -126,14 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
-    bool get _hasActiveFilters {
+  bool get _hasActiveFilters {
     return _searchQuery.isNotEmpty ||
         _selectedType != null ||
         _selectedStatus != null ||
         _selectedCategory != null;
   }
 
-    void _clearSearchAndFilters() {
+  void _clearSearchAndFilters() {
     _searchController.clear();
 
     setState(() {
@@ -170,8 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openItemDetails(LostFoundItem item) async {
-    await Navigator.of(context)
-        .pushNamed(AppRoutes.itemDetails, arguments: item);
+    await Navigator.of(context).pushNamed(
+      AppRoutes.itemDetails,
+      arguments: item,
+    );
 
     if (!mounted) {
       return;
@@ -281,7 +283,9 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.12),
+        ),
       ),
       child: Row(
         children: [
@@ -303,7 +307,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Welcome back,', style: AppTextStyles.bodyMedium),
+                Text(
+                  'Welcome back,',
+                  style: AppTextStyles.bodyMedium,
+                ),
                 const SizedBox(height: 2),
                 Text(
                   _userName,
@@ -354,7 +361,10 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppColors.textSecondary,
             ),
             const SizedBox(width: 7),
-            Text('Filter items', style: AppTextStyles.labelMedium),
+            Text(
+              'Filter items',
+              style: AppTextStyles.labelMedium,
+            ),
             if (_hasActiveFilters) ...[
               const Spacer(),
               TextButton(
@@ -369,7 +379,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        Text('Type', style: AppTextStyles.bodySmall),
+        Text(
+          'Type',
+          style: AppTextStyles.bodySmall,
+        ),
         const SizedBox(height: 7),
         Wrap(
           spacing: 8,
@@ -408,7 +421,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        Text('Status', style: AppTextStyles.bodySmall),
+        Text(
+          'Status',
+          style: AppTextStyles.bodySmall,
+        ),
         const SizedBox(height: 7),
         Wrap(
           spacing: 8,
@@ -446,9 +462,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-
-                const SizedBox(height: 14),
-        Text('Category', style: AppTextStyles.bodySmall),
+        const SizedBox(height: 14),
+        Text(
+          'Category',
+          style: AppTextStyles.bodySmall,
+        ),
         const SizedBox(height: 7),
         Wrap(
           spacing: 8,
@@ -532,7 +550,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(width: 12),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 5,
+          ),
           decoration: BoxDecoration(
             color: AppColors.surfaceMuted,
             borderRadius: BorderRadius.circular(20),
@@ -553,7 +574,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 44),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 44,
+        ),
         child: Column(
           children: [
             const SizedBox(
@@ -562,7 +586,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: CircularProgressIndicator(strokeWidth: 3),
             ),
             const SizedBox(height: 16),
-            Text('Loading items...', style: AppTextStyles.bodyMedium),
+            Text(
+              'Loading items...',
+              style: AppTextStyles.bodyMedium,
+            ),
           ],
         ),
       ),
@@ -573,7 +600,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 34,
+        ),
         child: Column(
           children: [
             Container(
@@ -616,16 +646,28 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_outlined, color: AppColors.error),
+            const Icon(
+              Icons.cloud_off_outlined,
+              color: AppColors.error,
+            ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(_errorMessage!, style: AppTextStyles.bodySmall),
+              child: Text(
+                _errorMessage!,
+                style: AppTextStyles.bodySmall,
+              ),
             ),
             const SizedBox(width: 8),
-            TextButton(onPressed: _loadItems, child: const Text('Retry')),
+            TextButton(
+              onPressed: _loadItems,
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),
@@ -636,7 +678,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 38),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 38,
+        ),
         child: Column(
           children: [
             Container(
@@ -685,7 +730,10 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _ItemCard extends StatelessWidget {
-  const _ItemCard({required this.item, required this.onTap});
+  const _ItemCard({
+    required this.item,
+    required this.onTap,
+  });
 
   final LostFoundItem item;
   final VoidCallback onTap;
@@ -722,7 +770,10 @@ class _ItemCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _TypeBadge(label: item.typeLabel, isLost: isLost),
+                        _TypeBadge(
+                          label: item.typeLabel,
+                          isLost: isLost,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -782,7 +833,10 @@ class _ItemCard extends StatelessWidget {
 }
 
 class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.label, required this.isLost});
+  const _TypeBadge({
+    required this.label,
+    required this.isLost,
+  });
 
   final String label;
   final bool isLost;
@@ -793,10 +847,15 @@ class _TypeBadge extends StatelessWidget {
         ? AppColors.warningSoft
         : AppColors.successSoft;
 
-    final Color textColor = isLost ? AppColors.warning : AppColors.success;
+    final Color textColor = isLost
+        ? AppColors.warning
+        : AppColors.success;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),
@@ -831,7 +890,10 @@ class _ResolutionBadge extends StatelessWidget {
         : AppColors.warning;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),
@@ -840,7 +902,9 @@ class _ResolutionBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isResolved ? Icons.check_circle_outline : Icons.circle_outlined,
+            isResolved
+                ? Icons.check_circle_outline
+                : Icons.circle_outlined,
             size: 14,
             color: foregroundColor,
           ),
@@ -860,7 +924,10 @@ class _ResolutionBadge extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text});
+  const _InfoRow({
+    required this.icon,
+    required this.text,
+  });
 
   final IconData icon;
   final String text;
@@ -870,9 +937,16 @@ class _InfoRow extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: AppColors.textSecondary),
+        Icon(
+          icon,
+          size: 15,
+          color: AppColors.textSecondary,
+        ),
         const SizedBox(width: 4),
-        Text(text, style: AppTextStyles.bodySmall),
+        Text(
+          text,
+          style: AppTextStyles.bodySmall,
+        ),
       ],
     );
   }
