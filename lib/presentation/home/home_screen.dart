@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
+import '../../data/models/conversation.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -480,13 +481,56 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Campus Lost & Found'),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).pushNamed(AppRoutes.conversations);
-            },
-            tooltip: 'Messages',
-            icon: const Icon(Icons.chat_bubble_outline_rounded),
-          ),
+          StreamBuilder<List<Conversation>>(
+  stream: FirebaseAuth.instance.currentUser == null
+      ? null
+      : _firestoreService.watchConversationsForUser(
+          FirebaseAuth.instance.currentUser!.uid,
+        ),
+  builder: (
+    BuildContext context,
+    AsyncSnapshot<List<Conversation>> snapshot,
+  ) {
+    final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    final bool hasUnreadMessages =
+        currentUserId != null &&
+        (snapshot.data ?? <Conversation>[]).any(
+          (Conversation conversation) =>
+              conversation.isUnreadFor(currentUserId),
+        );
+
+    return IconButton(
+      onPressed: () {
+        Navigator.of(context).pushNamed(AppRoutes.conversations);
+      },
+      tooltip: 'Messages',
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.chat_bubble_outline_rounded),
+          if (hasUnreadMessages)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.surface,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  },
+),
           IconButton(
             tooltip: 'My Posts',
             onPressed: () {
