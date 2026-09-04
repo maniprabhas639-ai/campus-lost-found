@@ -69,9 +69,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       if (updatedItem == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('This item is no longer available.'),
-          ),
+          const SnackBar(content: Text('This item is no longer available.')),
         );
 
         Navigator.of(context).pop(true);
@@ -148,11 +146,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Item marked as active.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Item marked as active.')));
     } catch (error) {
       debugPrint('UPDATE ITEM STATUS FIRESTORE ERROR: $error');
 
@@ -166,9 +162,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Unable to update the item status. Please try again.',
-          ),
+          content: Text('Unable to update the item status. Please try again.'),
         ),
       );
     }
@@ -222,9 +216,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Item deleted successfully.'),
-        ),
+        const SnackBar(content: Text('Item deleted successfully.')),
       );
 
       Navigator.of(context).pop(true);
@@ -241,9 +233,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Unable to delete the item. Please try again.',
-          ),
+          content: Text('Unable to delete the item. Please try again.'),
         ),
       );
     }
@@ -256,11 +246,16 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     final bool isResolved = _status == LostFoundStatus.resolved;
 
     final User? currentUser = FirebaseAuth.instance.currentUser;
-    final bool isOwner =
-        currentUser != null && currentUser.uid == item.ownerId;
+    final bool isOwner = currentUser != null && currentUser.uid == item.ownerId;
 
-    final bool isBusy =
-        _isDeleting || _isUpdatingStatus || _isRefreshingItem;
+    final bool canMessageOwner =
+        currentUser != null &&
+        !isOwner &&
+        item.ownerId != null &&
+        item.ownerId!.trim().isNotEmpty &&
+        !isResolved;
+
+    final bool isBusy = _isDeleting || _isUpdatingStatus || _isRefreshingItem;
 
     return Scaffold(
       appBar: AppBar(
@@ -305,27 +300,23 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           children: [
             _buildImageSection(item),
             const SizedBox(height: 18),
-            _buildTypeAndCategorySection(
-              item: item,
-              isLost: isLost,
-            ),
+            _buildTypeAndCategorySection(item: item, isLost: isLost),
             const SizedBox(height: 14),
             _StatusBadge(status: _status),
             const SizedBox(height: 16),
             Text(
               item.title,
-              style: AppTextStyles.headingLarge.copyWith(
-                fontSize: 26,
-              ),
+              style: AppTextStyles.headingLarge.copyWith(fontSize: 26),
             ),
             const SizedBox(height: 18),
             _buildDetailsSection(item),
+            if (canMessageOwner) ...[
+              const SizedBox(height: 20),
+              _buildMessageOwnerButton(item),
+            ],
             if (isOwner) ...[
               const SizedBox(height: 20),
-              _buildStatusCard(
-                isResolved: isResolved,
-                isBusy: isBusy,
-              ),
+              _buildStatusCard(isResolved: isResolved, isBusy: isBusy),
             ],
           ],
         ),
@@ -347,35 +338,31 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           ? Image.network(
               item.imageUrl!,
               fit: BoxFit.cover,
-              loadingBuilder: (
-                BuildContext context,
-                Widget child,
-                ImageChunkEvent? loadingProgress,
-              ) {
-                if (loadingProgress == null) {
-                  return child;
-                }
+              loadingBuilder:
+                  (
+                    BuildContext context,
+                    Widget child,
+                    ImageChunkEvent? loadingProgress,
+                  ) {
+                    if (loadingProgress == null) {
+                      return child;
+                    }
 
-                return const Center(
-                  child: SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (
-                BuildContext context,
-                Object error,
-                StackTrace? stackTrace,
-              ) {
-                return const _ImagePlaceholder(
-                  icon: Icons.image_not_supported_outlined,
-                  message: 'Image unavailable',
-                );
-              },
+                    return const Center(
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(strokeWidth: 3),
+                      ),
+                    );
+                  },
+              errorBuilder:
+                  (BuildContext context, Object error, StackTrace? stackTrace) {
+                    return const _ImagePlaceholder(
+                      icon: Icons.image_not_supported_outlined,
+                      message: 'Image unavailable',
+                    );
+                  },
             )
           : const _ImagePlaceholder(
               icon: Icons.image_outlined,
@@ -388,19 +375,18 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     required LostFoundItem item,
     required bool isLost,
   }) {
-    final Color backgroundColor =
-        isLost ? AppColors.warningSoft : AppColors.successSoft;
+    final Color backgroundColor = isLost
+        ? AppColors.warningSoft
+        : AppColors.successSoft;
 
-    final Color foregroundColor =
-        isLost ? AppColors.warning : AppColors.success;
+    final Color foregroundColor = isLost
+        ? AppColors.warning
+        : AppColors.success;
 
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 7,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(20),
@@ -430,10 +416,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         const SizedBox(width: 8),
         Flexible(
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 7,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: AppColors.surfaceMuted,
               borderRadius: BorderRadius.circular(20),
@@ -470,10 +453,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Item Information',
-          style: AppTextStyles.headingSmall,
-        ),
+        Text('Item Information', style: AppTextStyles.headingSmall),
         const SizedBox(height: 12),
         _DetailRow(
           icon: Icons.description_outlined,
@@ -502,10 +482,20 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     );
   }
 
-  Widget _buildStatusCard({
-    required bool isResolved,
-    required bool isBusy,
-  }) {
+  Widget _buildMessageOwnerButton(LostFoundItem item) {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: () {
+          Navigator.of(context).pushNamed(AppRoutes.chat, arguments: item);
+        },
+        icon: const Icon(Icons.chat_bubble_outline_rounded),
+        label: const Text('Message Owner'),
+      ),
+    );
+  }
+
+  Widget _buildStatusCard({required bool isResolved, required bool isBusy}) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -531,9 +521,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   isResolved
                       ? Icons.check_circle_outline_rounded
                       : Icons.circle_outlined,
-                  color: isResolved
-                      ? AppColors.success
-                      : AppColors.warning,
+                  color: isResolved ? AppColors.success : AppColors.warning,
                   size: 22,
                 ),
               ),
@@ -542,10 +530,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Item Status',
-                      style: AppTextStyles.headingSmall,
-                    ),
+                    Text('Item Status', style: AppTextStyles.headingSmall),
                     const SizedBox(height: 3),
                     Text(
                       isResolved
@@ -575,9 +560,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Icon(
                       isResolved
@@ -588,8 +571,8 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                 _isUpdatingStatus
                     ? 'Updating...'
                     : isResolved
-                        ? 'Mark as Active'
-                        : 'Mark as Resolved',
+                    ? 'Mark as Active'
+                    : 'Mark as Resolved',
               ),
             ),
           ),
@@ -600,10 +583,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 }
 
 class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder({
-    required this.icon,
-    required this.message,
-  });
+  const _ImagePlaceholder({required this.icon, required this.message});
 
   final IconData icon;
   final String message;
@@ -620,17 +600,10 @@ class _ImagePlaceholder extends StatelessWidget {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Icon(
-            icon,
-            size: 32,
-            color: AppColors.textMuted,
-          ),
+          child: Icon(icon, size: 32, color: AppColors.textMuted),
         ),
         const SizedBox(height: 12),
-        Text(
-          message,
-          style: AppTextStyles.bodySmall,
-        ),
+        Text(message, style: AppTextStyles.bodySmall),
       ],
     );
   }
@@ -645,19 +618,18 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isResolved = status == LostFoundStatus.resolved;
 
-    final Color backgroundColor =
-        isResolved ? AppColors.successSoft : AppColors.warningSoft;
+    final Color backgroundColor = isResolved
+        ? AppColors.successSoft
+        : AppColors.warningSoft;
 
-    final Color foregroundColor =
-        isResolved ? AppColors.success : AppColors.warning;
+    final Color foregroundColor = isResolved
+        ? AppColors.success
+        : AppColors.warning;
 
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 11,
-          vertical: 6,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(20),
@@ -666,9 +638,7 @@ class _StatusBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isResolved
-                  ? Icons.check_circle_outline
-                  : Icons.circle_outlined,
+              isResolved ? Icons.check_circle_outline : Icons.circle_outlined,
               size: 15,
               color: foregroundColor,
             ),
@@ -718,11 +688,7 @@ class _DetailRow extends StatelessWidget {
               color: AppColors.primarySoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              size: 19,
-              color: AppColors.primary,
-            ),
+            child: Icon(icon, size: 19, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -736,10 +702,7 @@ class _DetailRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  value,
-                  style: AppTextStyles.bodyLarge,
-                ),
+                Text(value, style: AppTextStyles.bodyLarge),
               ],
             ),
           ),
