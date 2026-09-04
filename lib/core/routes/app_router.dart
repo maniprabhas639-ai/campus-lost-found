@@ -12,6 +12,7 @@ import '../../presentation/my_posts/my_posts_screen.dart';
 import '../../presentation/profile/profile_screen.dart';
 import '../../presentation/report/report_item_screen.dart';
 import '../../presentation/messaging/chat_screen.dart';
+import '../../presentation/messaging/conversations_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -69,6 +70,12 @@ class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => ChatScreen(item: item),
+        );
+
+      case AppRoutes.conversations:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const ConversationsScreen(),
         );
 
       case AppRoutes.editItem:

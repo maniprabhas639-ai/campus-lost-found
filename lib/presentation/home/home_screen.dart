@@ -32,13 +32,13 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userName = 'Student';
 
   @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  _searchController.addListener(_onSearchChanged);
-  _loadItems();
-  _loadUserName();
-}
+    _searchController.addListener(_onSearchChanged);
+    _loadItems();
+    _loadUserName();
+  }
 
   Future<void> _loadItems() async {
     if (_isRefreshing) {
@@ -60,8 +60,7 @@ void initState() {
     }
 
     try {
-      final List<LostFoundItem> items =
-          await _firestoreService.getItems();
+      final List<LostFoundItem> items = await _firestoreService.getItems();
 
       if (!mounted) {
         return;
@@ -84,16 +83,14 @@ void initState() {
       setState(() {
         _isLoading = false;
         _isRefreshing = false;
-        _errorMessage =
-            'Unable to load items. Please try again.';
+        _errorMessage = 'Unable to load items. Please try again.';
       });
     }
   }
 
   void _onSearchChanged() {
     setState(() {
-      _searchQuery =
-          _searchController.text.trim().toLowerCase();
+      _searchQuery = _searchController.text.trim().toLowerCase();
     });
   }
 
@@ -107,11 +104,11 @@ void initState() {
       final bool matchesType =
           _selectedType == null || item.type == _selectedType;
 
-      final bool matchesStatus = _selectedStatus == null ||
-          item.status == _selectedStatus;
+      final bool matchesStatus =
+          _selectedStatus == null || item.status == _selectedStatus;
 
-      final bool matchesCategory = _selectedCategory == null ||
-          item.category == _selectedCategory;
+      final bool matchesCategory =
+          _selectedCategory == null || item.category == _selectedCategory;
 
       final String searchableText = [
         item.title,
@@ -124,10 +121,7 @@ void initState() {
         (String term) => searchableText.contains(term),
       );
 
-      return matchesType &&
-          matchesStatus &&
-          matchesCategory &&
-          matchesSearch;
+      return matchesType && matchesStatus && matchesCategory && matchesSearch;
     }).toList();
   }
 
@@ -167,32 +161,29 @@ void initState() {
   }
 
   Future<void> _loadUserName() async {
-  final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = FirebaseAuth.instance.currentUser;
 
-  if (user == null) {
-    return;
-  }
-
-  try {
-    final String? username =
-        await _firestoreService.getUsername(user.uid);
-
-    if (!mounted) {
+    if (user == null) {
       return;
     }
 
-    setState(() {
-      _userName = username ?? 'Student';
-    });
-  } catch (error) {
-    debugPrint('HOME USERNAME ERROR: $error');
+    try {
+      final String? username = await _firestoreService.getUsername(user.uid);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _userName = username ?? 'Student';
+      });
+    } catch (error) {
+      debugPrint('HOME USERNAME ERROR: $error');
+    }
   }
-}
 
   Future<void> _showReportMessage() async {
-    await Navigator.of(context).pushNamed(
-      AppRoutes.reportItem,
-    );
+    await Navigator.of(context).pushNamed(AppRoutes.reportItem);
 
     if (!mounted) {
       return;
@@ -201,13 +192,9 @@ void initState() {
     await _loadItems();
   }
 
-  Future<void> _openItemDetails(
-    LostFoundItem item,
-  ) async {
-    await Navigator.of(context).pushNamed(
-      AppRoutes.itemDetails,
-      arguments: item,
-    );
+  Future<void> _openItemDetails(LostFoundItem item) async {
+    await Navigator.of(context)
+        .pushNamed(AppRoutes.itemDetails, arguments: item);
 
     if (!mounted) {
       return;
@@ -226,28 +213,17 @@ void initState() {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (
-            BuildContext context,
-            StateSetter setModalState,
-          ) {
+          builder: (BuildContext context, StateSetter setModalState) {
             return SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  10,
-                  20,
-                  16,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
                       child: Container(
@@ -255,8 +231,7 @@ void initState() {
                         height: 4,
                         decoration: BoxDecoration(
                           color: AppColors.border,
-                          borderRadius:
-                              BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
@@ -268,8 +243,7 @@ void initState() {
                         Expanded(
                           child: Text(
                             'Filters',
-                            style:
-                                AppTextStyles.headingMedium,
+                            style: AppTextStyles.headingMedium,
                           ),
                         ),
                         TextButton(
@@ -281,12 +255,8 @@ void initState() {
                             });
                           },
                           style: TextButton.styleFrom(
-                            minimumSize:
-                                const Size(0, 36),
-                            padding:
-                                const EdgeInsets.symmetric(
-                              horizontal: 8,
-                            ),
+                            minimumSize: const Size(0, 36),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                           child: const Text('Reset'),
                         ),
@@ -295,10 +265,7 @@ void initState() {
 
                     const SizedBox(height: 14),
 
-                    Text(
-                      'Type',
-                      style: AppTextStyles.labelMedium,
-                    ),
+                    Text('Type', style: AppTextStyles.labelMedium),
 
                     const SizedBox(height: 7),
 
@@ -317,27 +284,20 @@ void initState() {
                         _buildModalChoiceChip(
                           label: 'Lost',
                           icon: Icons.help_outline_rounded,
-                          selected:
-                              temporaryType ==
-                                  LostFoundType.lost,
+                          selected: temporaryType == LostFoundType.lost,
                           onSelected: () {
                             setModalState(() {
-                              temporaryType =
-                                  LostFoundType.lost;
+                              temporaryType = LostFoundType.lost;
                             });
                           },
                         ),
                         _buildModalChoiceChip(
                           label: 'Found',
-                          icon:
-                              Icons.check_circle_outline_rounded,
-                          selected:
-                              temporaryType ==
-                                  LostFoundType.found,
+                          icon: Icons.check_circle_outline_rounded,
+                          selected: temporaryType == LostFoundType.found,
                           onSelected: () {
                             setModalState(() {
-                              temporaryType =
-                                  LostFoundType.found;
+                              temporaryType = LostFoundType.found;
                             });
                           },
                         ),
@@ -346,10 +306,7 @@ void initState() {
 
                     const SizedBox(height: 16),
 
-                    Text(
-                      'Status',
-                      style: AppTextStyles.labelMedium,
-                    ),
+                    Text('Status', style: AppTextStyles.labelMedium),
 
                     const SizedBox(height: 7),
 
@@ -358,8 +315,7 @@ void initState() {
                         _buildModalChoiceChip(
                           label: 'All statuses',
                           icon: Icons.layers_outlined,
-                          selected:
-                              temporaryStatus == null,
+                          selected: temporaryStatus == null,
                           onSelected: () {
                             setModalState(() {
                               temporaryStatus = null;
@@ -369,27 +325,20 @@ void initState() {
                         _buildModalChoiceChip(
                           label: 'Active',
                           icon: Icons.circle_outlined,
-                          selected:
-                              temporaryStatus ==
-                                  LostFoundStatus.active,
+                          selected: temporaryStatus == LostFoundStatus.active,
                           onSelected: () {
                             setModalState(() {
-                              temporaryStatus =
-                                  LostFoundStatus.active;
+                              temporaryStatus = LostFoundStatus.active;
                             });
                           },
                         ),
                         _buildModalChoiceChip(
                           label: 'Resolved',
-                          icon:
-                              Icons.check_circle_outline,
-                          selected:
-                              temporaryStatus ==
-                                  LostFoundStatus.resolved,
+                          icon: Icons.check_circle_outline,
+                          selected: temporaryStatus == LostFoundStatus.resolved,
                           onSelected: () {
                             setModalState(() {
-                              temporaryStatus =
-                                  LostFoundStatus.resolved;
+                              temporaryStatus = LostFoundStatus.resolved;
                             });
                           },
                         ),
@@ -398,10 +347,7 @@ void initState() {
 
                     const SizedBox(height: 16),
 
-                    Text(
-                      'Category',
-                      style: AppTextStyles.labelMedium,
-                    ),
+                    Text('Category', style: AppTextStyles.labelMedium),
 
                     const SizedBox(height: 7),
 
@@ -410,8 +356,7 @@ void initState() {
                         _buildModalChoiceChip(
                           label: 'All',
                           icon: Icons.grid_view_rounded,
-                          selected:
-                              temporaryCategory == null,
+                          selected: temporaryCategory == null,
                           onSelected: () {
                             setModalState(() {
                               temporaryCategory = null;
@@ -419,18 +364,13 @@ void initState() {
                           },
                         ),
                         ...ItemCategories.values.map(
-                          (String category) =>
-                              _buildModalChoiceChip(
+                          (String category) => _buildModalChoiceChip(
                             label: category,
-                            icon:
-                                Icons.category_outlined,
-                            selected:
-                                temporaryCategory ==
-                                    category,
+                            icon: Icons.category_outlined,
+                            selected: temporaryCategory == category,
                             onSelected: () {
                               setModalState(() {
-                                temporaryCategory =
-                                    category;
+                                temporaryCategory = category;
                               });
                             },
                           ),
@@ -447,16 +387,13 @@ void initState() {
                         onPressed: () {
                           setState(() {
                             _selectedType = temporaryType;
-                            _selectedStatus =
-                                temporaryStatus;
-                            _selectedCategory =
-                                temporaryCategory;
+                            _selectedStatus = temporaryStatus;
+                            _selectedCategory = temporaryCategory;
                           });
 
                           Navigator.of(context).pop();
                         },
-                        child:
-                            const Text('Apply Filters'),
+                        child: const Text('Apply Filters'),
                       ),
                     ),
                   ],
@@ -469,20 +406,14 @@ void initState() {
     );
   }
 
-  Widget _buildHorizontalFilterRow({
-    required List<Widget> children,
-  }) {
+  Widget _buildHorizontalFilterRow({required List<Widget> children}) {
     return SizedBox(
       height: 42,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: children.length,
-        separatorBuilder: (_, _) =>
-    const SizedBox(width: 7),
-        itemBuilder: (
-          BuildContext context,
-          int index,
-        ) {
+        separatorBuilder: (_, _) => const SizedBox(width: 7),
+        itemBuilder: (BuildContext context, int index) {
           return children[index];
         },
       ),
@@ -499,25 +430,17 @@ void initState() {
       avatar: Icon(
         icon,
         size: 16,
-        color: selected
-            ? AppColors.primary
-            : AppColors.textSecondary,
+        color: selected ? AppColors.primary : AppColors.textSecondary,
       ),
       label: Text(label),
       selected: selected,
       onSelected: (_) => onSelected(),
       showCheckmark: false,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       labelStyle: TextStyle(
         fontSize: 13,
-        fontWeight:
-            selected ? FontWeight.w600 : FontWeight.w500,
-        color: selected
-            ? AppColors.primary
-            : AppColors.textSecondary,
+        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+        color: selected ? AppColors.primary : AppColors.textSecondary,
       ),
     );
   }
@@ -558,26 +481,25 @@ void initState() {
         title: const Text('Campus Lost & Found'),
         actions: [
           IconButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(AppRoutes.conversations);
+            },
+            tooltip: 'Messages',
+            icon: const Icon(Icons.chat_bubble_outline_rounded),
+          ),
+          IconButton(
             tooltip: 'My Posts',
             onPressed: () {
-              Navigator.of(context).pushNamed(
-                AppRoutes.myPosts,
-              );
+              Navigator.of(context).pushNamed(AppRoutes.myPosts);
             },
-            icon: const Icon(
-              Icons.inventory_2_outlined,
-            ),
+            icon: const Icon(Icons.inventory_2_outlined),
           ),
           IconButton(
             tooltip: 'Profile',
             onPressed: () {
-              Navigator.of(context).pushNamed(
-                AppRoutes.profile,
-              );
+              Navigator.of(context).pushNamed(AppRoutes.profile);
             },
-            icon: const Icon(
-              Icons.person_outline,
-            ),
+            icon: const Icon(Icons.person_outline),
           ),
           const SizedBox(width: 4),
         ],
@@ -586,14 +508,8 @@ void initState() {
         child: RefreshIndicator(
           onRefresh: _loadItems,
           child: ListView(
-            physics:
-                const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              8,
-              16,
-              110,
-            ),
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
             children: [
               _buildWelcomeSection(),
 
@@ -605,8 +521,7 @@ void initState() {
 
               _buildCompactFilterBar(),
 
-              if (_hasActiveFilters &&
-                  _searchQuery.isEmpty) ...[
+              if (_hasActiveFilters && _searchQuery.isEmpty) ...[
                 const SizedBox(height: 9),
                 _buildActiveFilterChips(),
               ],
@@ -619,20 +534,17 @@ void initState() {
 
               if (_isLoading)
                 _buildLoadingState()
-              else if (items.isEmpty &&
-                  _errorMessage != null)
+              else if (items.isEmpty && _errorMessage != null)
                 _buildErrorState()
               else if (items.isEmpty)
                 _buildEmptyState()
               else
                 ...items.map(
                   (LostFoundItem item) => Padding(
-                    padding:
-                        const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: _ItemCard(
                       item: item,
-                      onTap: () =>
-                          _openItemDetails(item),
+                      onTap: () => _openItemDetails(item),
                     ),
                   ),
                 ),
@@ -657,15 +569,12 @@ void initState() {
           ),
         ),
       ),
-      floatingActionButton:
-          FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _showReportMessage,
         icon: const Icon(Icons.add),
         label: const Text(
           'Report Item',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -673,19 +582,11 @@ void initState() {
 
   Widget _buildWelcomeSection() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        13,
-        16,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 13, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color:
-              AppColors.primary.withValues(alpha: 0.12),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -707,13 +608,9 @@ void initState() {
 
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome back',
-                  style: AppTextStyles.bodySmall,
-                ),
+                const Text('Welcome back', style: AppTextStyles.bodySmall),
                 const SizedBox(height: 2),
                 Text(
                   _userName,
@@ -741,19 +638,13 @@ void initState() {
       controller: _searchController,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText:
-            'Search items, locations, categories...',
-        prefixIcon: const Icon(
-          Icons.search_rounded,
-        ),
+        hintText: 'Search items, locations, categories...',
+        prefixIcon: const Icon(Icons.search_rounded),
         suffixIcon: _searchQuery.isNotEmpty
             ? IconButton(
                 tooltip: 'Clear search',
-                onPressed:
-                    _searchController.clear,
-                icon: const Icon(
-                  Icons.clear_rounded,
-                ),
+                onPressed: _searchController.clear,
+                icon: const Icon(Icons.clear_rounded),
               )
             : null,
       ),
@@ -766,18 +657,13 @@ void initState() {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: _openFilters,
-            icon: const Icon(
-              Icons.tune_rounded,
-              size: 18,
-            ),
+            icon: const Icon(Icons.tune_rounded, size: 18),
             label: Text(
               _activeFilterCount == 0
                   ? 'Filters'
                   : 'Filters ($_activeFilterCount)',
             ),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 46),
-            ),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 46)),
           ),
         ),
 
@@ -787,10 +673,7 @@ void initState() {
             onPressed: _clearSearchAndFilters,
             style: TextButton.styleFrom(
               minimumSize: const Size(0, 46),
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
             child: const Text('Clear'),
           ),
@@ -807,17 +690,13 @@ void initState() {
         children: [
           if (_selectedType != null)
             _buildActiveFilterChip(
-              label:
-                  _selectedType == LostFoundType.lost
-                      ? 'Lost'
-                      : 'Found',
+              label: _selectedType == LostFoundType.lost ? 'Lost' : 'Found',
               onDeleted: _removeTypeFilter,
             ),
 
           if (_selectedStatus != null)
             _buildActiveFilterChip(
-              label: _selectedStatus ==
-                      LostFoundStatus.active
+              label: _selectedStatus == LostFoundStatus.active
                   ? 'Active'
                   : 'Resolved',
               onDeleted: _removeStatusFilter,
@@ -844,18 +723,13 @@ void initState() {
         onDeleted: onDeleted,
         deleteIconColor: AppColors.textSecondary,
         backgroundColor: AppColors.primarySoft,
-        side: BorderSide(
-          color:
-              AppColors.primary.withValues(alpha: 0.12),
-        ),
+        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.12)),
         labelStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: AppColors.primary,
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 3,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
         visualDensity: VisualDensity.compact,
       ),
     );
@@ -863,14 +737,11 @@ void initState() {
 
   Widget _buildSectionHeader(int itemCount) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Text(
-            _hasActiveFilters
-                ? 'Matching Items'
-                : 'Recent Items',
+            _hasActiveFilters ? 'Matching Items' : 'Recent Items',
             style: AppTextStyles.headingMedium,
           ),
         ),
@@ -878,10 +749,7 @@ void initState() {
         const SizedBox(width: 10),
 
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 9,
-            vertical: 5,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
           decoration: BoxDecoration(
             color: AppColors.surfaceMuted,
             borderRadius: BorderRadius.circular(20),
@@ -903,24 +771,16 @@ void initState() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 36,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
         child: Column(
           children: [
             const SizedBox(
               width: 28,
               height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 3),
             ),
             const SizedBox(height: 14),
-            Text(
-              'Finding recent items...',
-              style: AppTextStyles.bodyMedium,
-            ),
+            Text('Finding recent items...', style: AppTextStyles.bodyMedium),
           ],
         ),
       ),
@@ -931,10 +791,7 @@ void initState() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 30,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
         child: Column(
           children: [
             Container(
@@ -942,8 +799,7 @@ void initState() {
               height: 58,
               decoration: BoxDecoration(
                 color: AppColors.errorSoft,
-                borderRadius:
-                    BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: const Icon(
                 Icons.cloud_off_outlined,
@@ -963,8 +819,7 @@ void initState() {
             const SizedBox(height: 7),
 
             Text(
-              _errorMessage ??
-                  'Something went wrong. Please try again.',
+              _errorMessage ?? 'Something went wrong. Please try again.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -985,10 +840,7 @@ void initState() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             const Icon(
@@ -1000,18 +852,12 @@ void initState() {
             const SizedBox(width: 10),
 
             Expanded(
-              child: Text(
-                _errorMessage!,
-                style: AppTextStyles.bodySmall,
-              ),
+              child: Text(_errorMessage!, style: AppTextStyles.bodySmall),
             ),
 
             const SizedBox(width: 6),
 
-            TextButton(
-              onPressed: _loadItems,
-              child: const Text('Retry'),
-            ),
+            TextButton(onPressed: _loadItems, child: const Text('Retry')),
           ],
         ),
       ),
@@ -1022,10 +868,7 @@ void initState() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 34,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
         child: Column(
           children: [
             Container(
@@ -1035,8 +878,7 @@ void initState() {
                 color: _hasActiveFilters
                     ? AppColors.primarySoft
                     : AppColors.surfaceMuted,
-                borderRadius:
-                    BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
                 _hasActiveFilters
@@ -1050,9 +892,7 @@ void initState() {
             const SizedBox(height: 14),
 
             Text(
-              _hasActiveFilters
-                  ? 'No matching items'
-                  : 'No items found',
+              _hasActiveFilters ? 'No matching items' : 'No items found',
               style: AppTextStyles.headingSmall,
               textAlign: TextAlign.center,
             ),
@@ -1070,11 +910,8 @@ void initState() {
             if (_hasActiveFilters) ...[
               const SizedBox(height: 16),
               OutlinedButton(
-                onPressed:
-                    _clearSearchAndFilters,
-                child: const Text(
-                  'Clear Search & Filters',
-                ),
+                onPressed: _clearSearchAndFilters,
+                child: const Text('Clear Search & Filters'),
               ),
             ],
           ],
@@ -1085,18 +922,14 @@ void initState() {
 }
 
 class _ItemCard extends StatelessWidget {
-  const _ItemCard({
-    required this.item,
-    required this.onTap,
-  });
+  const _ItemCard({required this.item, required this.onTap});
 
   final LostFoundItem item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final bool isLost =
-        item.type == LostFoundType.lost;
+    final bool isLost = item.type == LostFoundType.lost;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -1106,8 +939,7 @@ class _ItemCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildIcon(isLost),
 
@@ -1115,30 +947,23 @@ class _ItemCard extends StatelessWidget {
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
                             item.title,
                             maxLines: 2,
-                            overflow:
-                                TextOverflow.ellipsis,
-                            style:
-                                AppTextStyles.headingSmall,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.headingSmall,
                           ),
                         ),
 
                         const SizedBox(width: 7),
 
-                        _TypeBadge(
-                          label: item.typeLabel,
-                          isLost: isLost,
-                        ),
+                        _TypeBadge(label: item.typeLabel, isLost: isLost),
                       ],
                     ),
 
@@ -1148,8 +973,7 @@ class _ItemCard extends StatelessWidget {
                       item.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          AppTextStyles.bodyMedium,
+                      style: AppTextStyles.bodyMedium,
                     ),
 
                     const SizedBox(height: 9),
@@ -1159,18 +983,15 @@ class _ItemCard extends StatelessWidget {
                       runSpacing: 5,
                       children: [
                         _InfoRow(
-                          icon: Icons
-                              .location_on_outlined,
+                          icon: Icons.location_on_outlined,
                           text: item.location,
                         ),
                         _InfoRow(
-                          icon: Icons
-                              .calendar_today_outlined,
+                          icon: Icons.calendar_today_outlined,
                           text: item.date,
                         ),
                         _InfoRow(
-                          icon: Icons
-                              .category_outlined,
+                          icon: Icons.category_outlined,
                           text: item.category,
                         ),
                       ],
@@ -1178,9 +999,7 @@ class _ItemCard extends StatelessWidget {
 
                     const SizedBox(height: 9),
 
-                    _ResolutionBadge(
-                      status: item.status,
-                    ),
+                    _ResolutionBadge(status: item.status),
                   ],
                 ),
               ),
@@ -1196,18 +1015,14 @@ class _ItemCard extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: isLost
-            ? AppColors.warningSoft
-            : AppColors.successSoft,
+        color: isLost ? AppColors.warningSoft : AppColors.successSoft,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Icon(
         isLost
             ? Icons.help_outline_rounded
             : Icons.check_circle_outline_rounded,
-        color: isLost
-            ? AppColors.warning
-            : AppColors.success,
+        color: isLost ? AppColors.warning : AppColors.success,
         size: 22,
       ),
     );
@@ -1215,10 +1030,7 @@ class _ItemCard extends StatelessWidget {
 }
 
 class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({
-    required this.label,
-    required this.isLost,
-  });
+  const _TypeBadge({required this.label, required this.isLost});
 
   final String label;
   final bool isLost;
@@ -1229,15 +1041,10 @@ class _TypeBadge extends StatelessWidget {
         ? AppColors.warningSoft
         : AppColors.successSoft;
 
-    final Color textColor = isLost
-        ? AppColors.warning
-        : AppColors.success;
+    final Color textColor = isLost ? AppColors.warning : AppColors.success;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),
@@ -1255,16 +1062,13 @@ class _TypeBadge extends StatelessWidget {
 }
 
 class _ResolutionBadge extends StatelessWidget {
-  const _ResolutionBadge({
-    required this.status,
-  });
+  const _ResolutionBadge({required this.status});
 
   final LostFoundStatus status;
 
   @override
   Widget build(BuildContext context) {
-    final bool isResolved =
-        status == LostFoundStatus.resolved;
+    final bool isResolved = status == LostFoundStatus.resolved;
 
     final Color backgroundColor = isResolved
         ? AppColors.successSoft
@@ -1275,10 +1079,7 @@ class _ResolutionBadge extends StatelessWidget {
         : AppColors.warning;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),
@@ -1287,9 +1088,7 @@ class _ResolutionBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isResolved
-                ? Icons.check_circle_outline
-                : Icons.circle_outlined,
+            isResolved ? Icons.check_circle_outline : Icons.circle_outlined,
             size: 13,
             color: foregroundColor,
           ),
@@ -1297,9 +1096,7 @@ class _ResolutionBadge extends StatelessWidget {
           const SizedBox(width: 5),
 
           Text(
-            isResolved
-                ? 'Resolved'
-                : 'Active',
+            isResolved ? 'Resolved' : 'Active',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1313,10 +1110,7 @@ class _ResolutionBadge extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoRow({required this.icon, required this.text});
 
   final IconData icon;
   final String text;
@@ -1326,11 +1120,7 @@ class _InfoRow extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 14,
-          color: AppColors.textSecondary,
-        ),
+        Icon(icon, size: 14, color: AppColors.textSecondary),
         const SizedBox(width: 4),
         Text(
           text,
