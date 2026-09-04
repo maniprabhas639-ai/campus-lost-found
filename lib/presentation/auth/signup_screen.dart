@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
@@ -58,13 +57,16 @@ class _SignupScreenState extends State<SignupScreen> {
         password: _passwordController.text,
       );
 
+      await _authService.sendEmailVerification();
+
+      await _authService.signOut();
+
       if (!mounted) {
         return;
       }
 
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.home,
-        (Route<dynamic> route) => false,
+      _showMessage(
+        'Account created successfully. Please check your email and verify your account before logging in.',
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) {
@@ -95,6 +97,7 @@ class _SignupScreenState extends State<SignupScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
+          duration: const Duration(seconds: 5),
         ),
       );
   }
@@ -118,6 +121,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
       case 'too-many-requests':
         return 'Too many attempts. Please try again later.';
+
+      case 'no-current-user':
+        return 'Unable to send the verification email. Please try again.';
 
       default:
         return e.message ?? 'Sign up failed. Please try again.';
@@ -205,7 +211,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           return 'Please enter your email';
                         }
 
-                        if (!email.contains('@')) {
+                        final RegExp emailRegex = RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        );
+
+                        if (!emailRegex.hasMatch(email)) {
                           return 'Please enter a valid email';
                         }
 

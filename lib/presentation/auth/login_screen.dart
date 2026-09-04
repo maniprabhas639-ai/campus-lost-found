@@ -50,10 +50,45 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _authService.signIn(
+      final UserCredential credential = await _authService.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      final User? user = credential.user;
+
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'Unable to retrieve the signed-in account.',
+        );
+      }
+
+      await user.reload();
+
+      final User? refreshedUser = _authService.currentUser;
+
+      if (refreshedUser == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'Unable to retrieve the signed-in account.',
+        );
+      }
+
+      if (!refreshedUser.emailVerified) {
+        await _authService.sendEmailVerification();
+        await _authService.signOut();
+
+        if (!mounted) {
+          return;
+        }
+
+        _showMessage(
+          'Please verify your email before logging in. A new verification email has been sent.',
+        );
+
+        return;
+      }
 
       if (!mounted) {
         return;
@@ -119,6 +154,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       case 'invalid-email':
         return 'Please enter a valid email address.';
+
+      case 'no-current-user':
+        return 'Unable to send the verification email. Please try again.';
 
       default:
         return e.message ?? 'Login failed. Please try again.';
@@ -206,7 +244,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           return 'Please enter your email';
                         }
 
-                        if (!email.contains('@')) {
+                        final RegExp emailRegex = RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        );
+
+                        if (!emailRegex.hasMatch(email)) {
                           return 'Please enter a valid email';
                         }
 

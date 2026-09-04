@@ -28,6 +28,27 @@ class AuthService {
     );
   }
 
+  Future<void> sendEmailVerification() async {
+    final User? user = _firebaseAuth.currentUser;
+
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'No signed-in user is available for email verification.',
+      );
+    }
+
+    if (user.emailVerified) {
+      return;
+    }
+
+    await user.sendEmailVerification();
+  }
+
+  Future<void> reloadCurrentUser() async {
+    await _firebaseAuth.currentUser?.reload();
+  }
+
   Future<void> sendPasswordResetEmail({
     required String email,
   }) {
