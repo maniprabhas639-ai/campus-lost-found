@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../models/chat_message.dart';
+import '../models/conversation.dart';
 import '../models/lost_found_item.dart';
 
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -14,41 +16,38 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
 
+  CollectionReference<Map<String, dynamic>> get _conversationsCollection =>
+      _firestore.collection('conversations');
+
   Future<List<LostFoundItem>> getItems() async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _itemsCollection
-            .where('status', isEqualTo: 'active')
-            .get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
+        .where('status', isEqualTo: 'active')
+        .get();
 
     final List<QueryDocumentSnapshot<Map<String, dynamic>>> documents =
-        List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
-      snapshot.docs,
-    );
+        List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(snapshot.docs);
 
-    documents.sort(
-      (
-        QueryDocumentSnapshot<Map<String, dynamic>> first,
-        QueryDocumentSnapshot<Map<String, dynamic>> second,
-      ) {
-        final dynamic firstCreatedAt = first.data()['createdAt'];
-        final dynamic secondCreatedAt = second.data()['createdAt'];
+    documents.sort((
+      QueryDocumentSnapshot<Map<String, dynamic>> first,
+      QueryDocumentSnapshot<Map<String, dynamic>> second,
+    ) {
+      final dynamic firstCreatedAt = first.data()['createdAt'];
+      final dynamic secondCreatedAt = second.data()['createdAt'];
 
-        if (firstCreatedAt is Timestamp &&
-            secondCreatedAt is Timestamp) {
-          return secondCreatedAt.compareTo(firstCreatedAt);
-        }
+      if (firstCreatedAt is Timestamp && secondCreatedAt is Timestamp) {
+        return secondCreatedAt.compareTo(firstCreatedAt);
+      }
 
-        if (firstCreatedAt is Timestamp) {
-          return -1;
-        }
+      if (firstCreatedAt is Timestamp) {
+        return -1;
+      }
 
-        if (secondCreatedAt is Timestamp) {
-          return 1;
-        }
+      if (secondCreatedAt is Timestamp) {
+        return 1;
+      }
 
-        return 0;
-      },
-    );
+      return 0;
+    });
 
     return documents
         .map(
@@ -70,10 +69,9 @@ class FirestoreService {
   }
 
   Future<List<LostFoundItem>> getItemsByOwner(String ownerId) async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _itemsCollection
-            .where('ownerId', isEqualTo: ownerId)
-            .get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
+        .where('ownerId', isEqualTo: ownerId)
+        .get();
 
     return snapshot.docs
         .map(
@@ -88,13 +86,10 @@ class FirestoreService {
     required String username,
     required String email,
   }) async {
-    await _usersCollection.doc(userId).set(
-      {
-        'username': username.trim(),
-        'email': email.trim(),
-      },
-      SetOptions(merge: true),
-    );
+    await _usersCollection.doc(userId).set({
+      'username': username.trim(),
+      'email': email.trim(),
+    }, SetOptions(merge: true));
   }
 
   Future<String?> getUsername(String userId) async {
@@ -175,5 +170,209 @@ class FirestoreService {
 
   Future<void> deleteItem({required String itemId}) async {
     await _itemsCollection.doc(itemId).delete();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Messaging
+  // ---------------------------------------------------------------------------
+
+  String getConversationId({
+    required String itemId,
+    required String currentUserId,
+    required String ownerId,
+  }) {
+    if (currentUserId == ownerId) {
+      throw ArgumentError(
+        'The item owner cannot start a conversation with themselves.',
+      );
+    }
+
+    final List<String> participantIds = <String>[currentUserId, ownerId]
+      ..sort();
+
+    return '${itemId}_${participantIds.join('_')}';
+  }
+
+  Future<Conversation> createConversation({
+    required String itemId,
+    required String itemTitle,
+    required String currentUserId,
+    required String ownerId,
+  }) async {
+    if (currentUserId == ownerId) {
+      throw ArgumentError(
+        'The item owner cannot start a conversation with themselves.',
+      );
+    }
+
+    final String conversationId = getConversationId(
+      itemId: itemId,
+      currentUserId: currentUserId,
+      ownerId: ownerId,
+    );
+
+    final DocumentReference<Map<String, dynamic>> conversationReference =
+        _conversationsCollection.doc(conversationId);
+
+    final DocumentSnapshot<Map<String, dynamic>> existingConversation =
+        await conversationReference.get();
+
+    if (!existingConversation.exists) {
+      await conversationReference.set({
+        'itemId': itemId,
+        'itemTitle': itemTitle.trim(),
+        'participantIds': <String>[currentUserId, ownerId],
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastMessage': '',
+        'lastMessageSenderId': null,
+      });
+    }
+
+    final DocumentSnapshot<Map<String, dynamic>> conversation =
+        await conversationReference.get();
+
+    if (!conversation.exists) {
+      throw StateError('Unable to create the conversation.');
+    }
+
+    return Conversation.fromFirestore(conversation);
+  }
+
+  Future<Conversation?> getConversation({
+    required String conversationId,
+  }) async {
+    final DocumentSnapshot<Map<String, dynamic>> document =
+        await _conversationsCollection.doc(conversationId).get();
+
+    if (!document.exists) {
+      return null;
+    }
+
+    return Conversation.fromFirestore(document);
+  }
+
+  Future<List<Conversation>> getConversationsForUser(String userId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _conversationsCollection
+            .where('participantIds', arrayContains: userId)
+            .get();
+
+    final List<Conversation> conversations = snapshot.docs
+        .map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> document) =>
+              Conversation.fromFirestore(document),
+        )
+        .toList();
+
+    conversations.sort((Conversation first, Conversation second) {
+      final Timestamp? firstUpdatedAt = first.updatedAt;
+      final Timestamp? secondUpdatedAt = second.updatedAt;
+
+      if (firstUpdatedAt == null && secondUpdatedAt == null) {
+        return 0;
+      }
+
+      if (firstUpdatedAt == null) {
+        return 1;
+      }
+
+      if (secondUpdatedAt == null) {
+        return -1;
+      }
+
+      return secondUpdatedAt.compareTo(firstUpdatedAt);
+    });
+
+    return conversations;
+  }
+
+  Stream<List<Conversation>> watchConversationsForUser(String userId) {
+    return _conversationsCollection
+        .where('participantIds', arrayContains: userId)
+        .snapshots()
+        .map((QuerySnapshot<Map<String, dynamic>> snapshot) {
+          final List<Conversation> conversations = snapshot.docs
+              .map(
+                (QueryDocumentSnapshot<Map<String, dynamic>> document) =>
+                    Conversation.fromFirestore(document),
+              )
+              .toList();
+
+          conversations.sort((Conversation first, Conversation second) {
+            final Timestamp? firstUpdatedAt = first.updatedAt;
+            final Timestamp? secondUpdatedAt = second.updatedAt;
+
+            if (firstUpdatedAt == null && secondUpdatedAt == null) {
+              return 0;
+            }
+
+            if (firstUpdatedAt == null) {
+              return 1;
+            }
+
+            if (secondUpdatedAt == null) {
+              return -1;
+            }
+
+            return secondUpdatedAt.compareTo(firstUpdatedAt);
+          });
+
+          return conversations;
+        });
+  }
+
+  Stream<List<ChatMessage>> watchMessages(String conversationId) {
+    return _conversationsCollection
+        .doc(conversationId)
+        .collection('messages')
+        .orderBy('createdAt')
+        .snapshots()
+        .map((QuerySnapshot<Map<String, dynamic>> snapshot) {
+          return snapshot.docs
+              .map(
+                (QueryDocumentSnapshot<Map<String, dynamic>> document) =>
+                    ChatMessage.fromFirestore(document),
+              )
+              .toList();
+        });
+  }
+
+  Future<void> sendMessage({
+    required String conversationId,
+    required String senderId,
+    required String text,
+  }) async {
+    final String trimmedText = text.trim();
+
+    if (trimmedText.isEmpty) {
+      throw ArgumentError('Message text cannot be empty.');
+    }
+
+    if (trimmedText.length > 2000) {
+      throw ArgumentError('Message text cannot exceed 2000 characters.');
+    }
+
+    final DocumentReference<Map<String, dynamic>> conversationReference =
+        _conversationsCollection.doc(conversationId);
+
+    final DocumentReference<Map<String, dynamic>> messageReference =
+        conversationReference.collection('messages').doc();
+
+    final WriteBatch batch = _firestore.batch();
+
+    batch.set(messageReference, {
+      'senderId': senderId,
+      'text': trimmedText,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    batch.update(conversationReference, {
+      'lastMessage': trimmedText,
+      'lastMessageSenderId': senderId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
   }
 }
