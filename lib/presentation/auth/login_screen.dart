@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
 
@@ -57,8 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Do not use authStateChanges() here for navigation.
-      // We already know sign-in succeeded.
       Navigator.of(context).pushNamedAndRemoveUntil(
         AppRoutes.home,
         (Route<dynamic> route) => false,
@@ -127,139 +127,184 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.sizeOf(context);
+    final double horizontalPadding = screenSize.width < 380 ? 20 : 24;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Welcome Back',
-                    style: AppTextStyles.headingMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-
-                  TextFormField(
-                    controller: _emailController,
-                    enabled: !_isLoading,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    autocorrect: false,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    validator: (value) {
-                      final String email = value?.trim() ?? '';
-
-                      if (email.isEmpty) {
-                        return 'Please enter your email';
-                      }
-
-                      if (!email.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _passwordController,
-                    enabled: !_isLoading,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _login(),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 32,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.search_rounded,
+                          size: 34,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
 
-                      return null;
-                    },
-                  ),
+                    const SizedBox(height: 24),
 
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              Navigator.of(context).pushNamed(
-                                AppRoutes.forgotPassword,
-                              );
-                            },
-                      child: const Text('Forgot Password?'),
+                    Text(
+                      AppConstants.appName,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
-                  SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Login'),
+                    const Text(
+                      'Welcome back',
+                      style: AppTextStyles.headingLarge,
                     ),
-                  ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 8),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account?"),
-                      TextButton(
+                    const Text(
+                      'Sign in to find lost items and manage your posts.',
+                      style: AppTextStyles.bodyMedium,
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    TextFormField(
+                      controller: _emailController,
+                      enabled: !_isLoading,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autocorrect: false,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        hintText: 'Enter your email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                      validator: (value) {
+                        final String email = value?.trim() ?? '';
+
+                        if (email.isEmpty) {
+                          return 'Please enter your email';
+                        }
+
+                        if (!email.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _passwordController,
+                      enabled: !_isLoading,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _login(),
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        hintText: 'Enter your password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+
+                        return null;
+                      },
+                    ),
+
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
                         onPressed: _isLoading
                             ? null
                             : () {
                                 Navigator.of(context).pushNamed(
-                                  AppRoutes.signup,
+                                  AppRoutes.forgotPassword,
                                 );
                               },
-                        child: const Text('Sign Up'),
+                        child: const Text('Forgot Password?'),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _login,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Login'),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Don't have an account?",
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                        TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  Navigator.of(context).pushNamed(
+                                    AppRoutes.signup,
+                                  );
+                                },
+                          child: const Text('Sign Up'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

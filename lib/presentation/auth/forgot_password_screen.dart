@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
 
@@ -113,91 +115,125 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.sizeOf(context);
+    final double horizontalPadding = screenSize.width < 380 ? 20 : 24;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Forgot Password'),
-      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Reset Your Password',
-                    style: AppTextStyles.headingMedium,
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    'Enter your email address and we will send '
-                    'you a password reset link.',
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  TextFormField(
-                    controller: _emailController,
-                    enabled: !_isLoading,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.done,
-                    autocorrect: false,
-                    onFieldSubmitted: (_) => _sendResetEmail(),
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 32,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.lock_reset_rounded,
+                          size: 34,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
-                    validator: (value) {
-                      final String email = value?.trim() ?? '';
 
-                      if (email.isEmpty) {
-                        return 'Please enter your email';
-                      }
+                    const SizedBox(height: 24),
 
-                      if (!email.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _sendResetEmail,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Send Reset Email'),
+                    Text(
+                      AppConstants.appName,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 8),
 
-                  TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            Navigator.of(context).pop();
-                          },
-                    child: const Text('Back to Login'),
-                  ),
-                ],
+                    const Text(
+                      'Reset your password',
+                      style: AppTextStyles.headingLarge,
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    const Text(
+                      'Enter your email address and we will send you a '
+                      'password reset link.',
+                      style: AppTextStyles.bodyMedium,
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    TextFormField(
+                      controller: _emailController,
+                      enabled: !_isLoading,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.done,
+                      autocorrect: false,
+                      onFieldSubmitted: (_) => _sendResetEmail(),
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        hintText: 'Enter your email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                      validator: (value) {
+                        final String email = value?.trim() ?? '';
+
+                        if (email.isEmpty) {
+                          return 'Please enter your email';
+                        }
+
+                        if (!email.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _sendResetEmail,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Send Reset Email'),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              Navigator.of(context).pop();
+                            },
+                      child: const Text('Back to Login'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

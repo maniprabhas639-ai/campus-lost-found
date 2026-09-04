@@ -58,7 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     try {
-      final List<LostFoundItem> items = await _firestoreService.getItems();
+      final List<LostFoundItem> items =
+          await _firestoreService.getItems();
 
       if (!mounted) {
         return;
@@ -81,14 +82,16 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isLoading = false;
         _isRefreshing = false;
-        _errorMessage = 'Unable to load items. Please try again.';
+        _errorMessage =
+            'Unable to load items. Please try again.';
       });
     }
   }
 
   void _onSearchChanged() {
     setState(() {
-      _searchQuery = _searchController.text.trim().toLowerCase();
+      _searchQuery =
+          _searchController.text.trim().toLowerCase();
     });
   }
 
@@ -102,11 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
       final bool matchesType =
           _selectedType == null || item.type == _selectedType;
 
-      final bool matchesStatus =
-          _selectedStatus == null || item.status == _selectedStatus;
+      final bool matchesStatus = _selectedStatus == null ||
+          item.status == _selectedStatus;
 
-      final bool matchesCategory =
-          _selectedCategory == null || item.category == _selectedCategory;
+      final bool matchesCategory = _selectedCategory == null ||
+          item.category == _selectedCategory;
 
       final String searchableText = [
         item.title,
@@ -133,6 +136,24 @@ class _HomeScreenState extends State<HomeScreen> {
         _selectedCategory != null;
   }
 
+  int get _activeFilterCount {
+    int count = 0;
+
+    if (_selectedType != null) {
+      count++;
+    }
+
+    if (_selectedStatus != null) {
+      count++;
+    }
+
+    if (_selectedCategory != null) {
+      count++;
+    }
+
+    return count;
+  }
+
   void _clearSearchAndFilters() {
     _searchController.clear();
 
@@ -144,9 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String get _userName {
-    final User? user = FirebaseAuth.instance.currentUser;
+    final User? user =
+        FirebaseAuth.instance.currentUser;
 
-    if (user?.displayName != null && user!.displayName!.trim().isNotEmpty) {
+    if (user?.displayName != null &&
+        user!.displayName!.trim().isNotEmpty) {
       return user.displayName!.trim();
     }
 
@@ -160,7 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _showReportMessage() async {
-    await Navigator.of(context).pushNamed(AppRoutes.reportItem);
+    await Navigator.of(context).pushNamed(
+      AppRoutes.reportItem,
+    );
 
     if (!mounted) {
       return;
@@ -169,7 +194,9 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadItems();
   }
 
-  Future<void> _openItemDetails(LostFoundItem item) async {
+  Future<void> _openItemDetails(
+    LostFoundItem item,
+  ) async {
     await Navigator.of(context).pushNamed(
       AppRoutes.itemDetails,
       arguments: item,
@@ -180,6 +207,330 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     await _loadItems();
+  }
+
+  Future<void> _openFilters() async {
+    LostFoundType? temporaryType = _selectedType;
+    LostFoundStatus? temporaryStatus = _selectedStatus;
+    String? temporaryCategory = _selectedCategory;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (
+            BuildContext context,
+            StateSetter setModalState,
+          ) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  20,
+                  10,
+                  20,
+                  16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.border,
+                          borderRadius:
+                              BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Filters',
+                            style:
+                                AppTextStyles.headingMedium,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setModalState(() {
+                              temporaryType = null;
+                              temporaryStatus = null;
+                              temporaryCategory = null;
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            minimumSize:
+                                const Size(0, 36),
+                            padding:
+                                const EdgeInsets.symmetric(
+                              horizontal: 8,
+                            ),
+                          ),
+                          child: const Text('Reset'),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    Text(
+                      'Type',
+                      style: AppTextStyles.labelMedium,
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    _buildHorizontalFilterRow(
+                      children: [
+                        _buildModalChoiceChip(
+                          label: 'All',
+                          icon: Icons.grid_view_rounded,
+                          selected: temporaryType == null,
+                          onSelected: () {
+                            setModalState(() {
+                              temporaryType = null;
+                            });
+                          },
+                        ),
+                        _buildModalChoiceChip(
+                          label: 'Lost',
+                          icon: Icons.help_outline_rounded,
+                          selected:
+                              temporaryType ==
+                                  LostFoundType.lost,
+                          onSelected: () {
+                            setModalState(() {
+                              temporaryType =
+                                  LostFoundType.lost;
+                            });
+                          },
+                        ),
+                        _buildModalChoiceChip(
+                          label: 'Found',
+                          icon:
+                              Icons.check_circle_outline_rounded,
+                          selected:
+                              temporaryType ==
+                                  LostFoundType.found,
+                          onSelected: () {
+                            setModalState(() {
+                              temporaryType =
+                                  LostFoundType.found;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Text(
+                      'Status',
+                      style: AppTextStyles.labelMedium,
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    _buildHorizontalFilterRow(
+                      children: [
+                        _buildModalChoiceChip(
+                          label: 'All statuses',
+                          icon: Icons.layers_outlined,
+                          selected:
+                              temporaryStatus == null,
+                          onSelected: () {
+                            setModalState(() {
+                              temporaryStatus = null;
+                            });
+                          },
+                        ),
+                        _buildModalChoiceChip(
+                          label: 'Active',
+                          icon: Icons.circle_outlined,
+                          selected:
+                              temporaryStatus ==
+                                  LostFoundStatus.active,
+                          onSelected: () {
+                            setModalState(() {
+                              temporaryStatus =
+                                  LostFoundStatus.active;
+                            });
+                          },
+                        ),
+                        _buildModalChoiceChip(
+                          label: 'Resolved',
+                          icon:
+                              Icons.check_circle_outline,
+                          selected:
+                              temporaryStatus ==
+                                  LostFoundStatus.resolved,
+                          onSelected: () {
+                            setModalState(() {
+                              temporaryStatus =
+                                  LostFoundStatus.resolved;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Text(
+                      'Category',
+                      style: AppTextStyles.labelMedium,
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    _buildHorizontalFilterRow(
+                      children: [
+                        _buildModalChoiceChip(
+                          label: 'All',
+                          icon: Icons.grid_view_rounded,
+                          selected:
+                              temporaryCategory == null,
+                          onSelected: () {
+                            setModalState(() {
+                              temporaryCategory = null;
+                            });
+                          },
+                        ),
+                        ...ItemCategories.values.map(
+                          (String category) =>
+                              _buildModalChoiceChip(
+                            label: category,
+                            icon:
+                                Icons.category_outlined,
+                            selected:
+                                temporaryCategory ==
+                                    category,
+                            onSelected: () {
+                              setModalState(() {
+                                temporaryCategory =
+                                    category;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedType = temporaryType;
+                            _selectedStatus =
+                                temporaryStatus;
+                            _selectedCategory =
+                                temporaryCategory;
+                          });
+
+                          Navigator.of(context).pop();
+                        },
+                        child:
+                            const Text('Apply Filters'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildHorizontalFilterRow({
+    required List<Widget> children,
+  }) {
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: children.length,
+        separatorBuilder: (_, _) =>
+    const SizedBox(width: 7),
+        itemBuilder: (
+          BuildContext context,
+          int index,
+        ) {
+          return children[index];
+        },
+      ),
+    );
+  }
+
+  Widget _buildModalChoiceChip({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    return ChoiceChip(
+      avatar: Icon(
+        icon,
+        size: 16,
+        color: selected
+            ? AppColors.primary
+            : AppColors.textSecondary,
+      ),
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      showCheckmark: false,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 5,
+      ),
+      labelStyle: TextStyle(
+        fontSize: 13,
+        fontWeight:
+            selected ? FontWeight.w600 : FontWeight.w500,
+        color: selected
+            ? AppColors.primary
+            : AppColors.textSecondary,
+      ),
+    );
+  }
+
+  void _removeTypeFilter() {
+    setState(() {
+      _selectedType = null;
+    });
+  }
+
+  void _removeStatusFilter() {
+    setState(() {
+      _selectedStatus = null;
+    });
+  }
+
+  void _removeCategoryFilter() {
+    setState(() {
+      _selectedCategory = null;
+    });
   }
 
   @override
@@ -202,16 +553,24 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'My Posts',
             onPressed: () {
-              Navigator.of(context).pushNamed(AppRoutes.myPosts);
+              Navigator.of(context).pushNamed(
+                AppRoutes.myPosts,
+              );
             },
-            icon: const Icon(Icons.inventory_2_outlined),
+            icon: const Icon(
+              Icons.inventory_2_outlined,
+            ),
           ),
           IconButton(
             tooltip: 'Profile',
             onPressed: () {
-              Navigator.of(context).pushNamed(AppRoutes.profile);
+              Navigator.of(context).pushNamed(
+                AppRoutes.profile,
+              );
             },
-            icon: const Icon(Icons.person_outline),
+            icon: const Icon(
+              Icons.person_outline,
+            ),
           ),
           const SizedBox(width: 4),
         ],
@@ -220,35 +579,59 @@ class _HomeScreenState extends State<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: _loadItems,
           child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
+            physics:
+                const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              110,
+            ),
             children: [
               _buildWelcomeSection(),
-              const SizedBox(height: 20),
+
+              const SizedBox(height: 14),
+
               _buildSearchField(),
+
+              const SizedBox(height: 10),
+
+              _buildCompactFilterBar(),
+
+              if (_hasActiveFilters &&
+                  _searchQuery.isEmpty) ...[
+                const SizedBox(height: 9),
+                _buildActiveFilterChips(),
+              ],
+
               const SizedBox(height: 20),
-              _buildFilterSection(),
-              const SizedBox(height: 28),
+
               _buildSectionHeader(items.length),
-              const SizedBox(height: 12),
+
+              const SizedBox(height: 10),
+
               if (_isLoading)
                 _buildLoadingState()
-              else if (items.isEmpty && _errorMessage != null)
+              else if (items.isEmpty &&
+                  _errorMessage != null)
                 _buildErrorState()
               else if (items.isEmpty)
                 _buildEmptyState()
               else
                 ...items.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                  (LostFoundItem item) => Padding(
+                    padding:
+                        const EdgeInsets.only(bottom: 10),
                     child: _ItemCard(
                       item: item,
-                      onTap: () => _openItemDetails(item),
+                      onTap: () =>
+                          _openItemDetails(item),
                     ),
                   ),
                 ),
+
               if (_isRefreshing) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Center(
                   child: Text(
                     'Refreshing items...',
@@ -256,22 +639,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+
               if (!_isRefreshing &&
                   _errorMessage != null &&
                   _items.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _buildRefreshErrorState(),
               ],
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton:
+          FloatingActionButton.extended(
         onPressed: _showReportMessage,
         icon: const Icon(Icons.add),
         label: const Text(
           'Report Item',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -279,37 +666,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWelcomeSection() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        13,
+        16,
+        14,
+      ),
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.12),
+          color:
+              AppColors.primary.withValues(alpha: 0.12),
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(13),
             ),
             child: const Icon(
               Icons.search_rounded,
               color: AppColors.primary,
-              size: 25,
+              size: 23,
             ),
           ),
-          const SizedBox(width: 14),
+
+          const SizedBox(width: 12),
+
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Welcome back,',
-                  style: AppTextStyles.bodyMedium,
+                const Text(
+                  'Welcome back',
+                  style: AppTextStyles.bodySmall,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -318,9 +714,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.headingSmall,
                 ),
-                const SizedBox(height: 4),
-                Text(
+                const SizedBox(height: 2),
+                const Text(
                   'Find what you lost or help someone find theirs.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodySmall,
                 ),
               ],
@@ -336,222 +734,145 @@ class _HomeScreenState extends State<HomeScreen> {
       controller: _searchController,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Search title, description, location...',
-        prefixIcon: const Icon(Icons.search_rounded),
+        hintText:
+            'Search items, locations, categories...',
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+        ),
         suffixIcon: _searchQuery.isNotEmpty
             ? IconButton(
                 tooltip: 'Clear search',
-                onPressed: _searchController.clear,
-                icon: const Icon(Icons.clear_rounded),
+                onPressed:
+                    _searchController.clear,
+                icon: const Icon(
+                  Icons.clear_rounded,
+                ),
               )
             : null,
       ),
     );
   }
 
-  Widget _buildFilterSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildCompactFilterBar() {
+    return Row(
       children: [
-        Row(
-          children: [
-            const Icon(
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _openFilters,
+            icon: const Icon(
               Icons.tune_rounded,
               size: 18,
-              color: AppColors.textSecondary,
             ),
-            const SizedBox(width: 7),
-            Text(
-              'Filter items',
-              style: AppTextStyles.labelMedium,
+            label: Text(
+              _activeFilterCount == 0
+                  ? 'Filters'
+                  : 'Filters ($_activeFilterCount)',
             ),
-            if (_hasActiveFilters) ...[
-              const Spacer(),
-              TextButton(
-                onPressed: _clearSearchAndFilters,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(0, 36),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-                child: const Text('Clear'),
-              ),
-            ],
-          ],
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 46),
+            ),
+          ),
         ),
-        const SizedBox(height: 10),
-        Text(
-          'Type',
-          style: AppTextStyles.bodySmall,
-        ),
-        const SizedBox(height: 7),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildFilterChip(
-              label: 'All',
-              icon: Icons.grid_view_rounded,
-              selected: _selectedType == null,
-              onSelected: (_) {
-                setState(() {
-                  _selectedType = null;
-                });
-              },
-            ),
-            _buildFilterChip(
-              label: 'Lost',
-              icon: Icons.help_outline_rounded,
-              selected: _selectedType == LostFoundType.lost,
-              onSelected: (_) {
-                setState(() {
-                  _selectedType = LostFoundType.lost;
-                });
-              },
-            ),
-            _buildFilterChip(
-              label: 'Found',
-              icon: Icons.check_circle_outline_rounded,
-              selected: _selectedType == LostFoundType.found,
-              onSelected: (_) {
-                setState(() {
-                  _selectedType = LostFoundType.found;
-                });
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Text(
-          'Status',
-          style: AppTextStyles.bodySmall,
-        ),
-        const SizedBox(height: 7),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildStatusFilterChip(
-              label: 'All statuses',
-              icon: Icons.layers_outlined,
-              selected: _selectedStatus == null,
-              onSelected: (_) {
-                setState(() {
-                  _selectedStatus = null;
-                });
-              },
-            ),
-            _buildStatusFilterChip(
-              label: 'Active',
-              icon: Icons.circle_outlined,
-              selected: _selectedStatus == LostFoundStatus.active,
-              onSelected: (_) {
-                setState(() {
-                  _selectedStatus = LostFoundStatus.active;
-                });
-              },
-            ),
-            _buildStatusFilterChip(
-              label: 'Resolved',
-              icon: Icons.check_circle_outline,
-              selected: _selectedStatus == LostFoundStatus.resolved,
-              onSelected: (_) {
-                setState(() {
-                  _selectedStatus = LostFoundStatus.resolved;
-                });
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Text(
-          'Category',
-          style: AppTextStyles.bodySmall,
-        ),
-        const SizedBox(height: 7),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildFilterChip(
-              label: 'All',
-              icon: Icons.grid_view_rounded,
-              selected: _selectedCategory == null,
-              onSelected: (_) {
-                setState(() {
-                  _selectedCategory = null;
-                });
-              },
-            ),
-            ...ItemCategories.values.map(
-              (String category) => _buildFilterChip(
-                label: category,
-                icon: Icons.category_outlined,
-                selected: _selectedCategory == category,
-                onSelected: (_) {
-                  setState(() {
-                    _selectedCategory = category;
-                  });
-                },
+
+        if (_hasActiveFilters) ...[
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: _clearSearchAndFilters,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 46),
+              padding:
+                  const EdgeInsets.symmetric(
+                horizontal: 8,
               ),
             ),
-          ],
-        ),
+            child: const Text('Clear'),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildFilterChip({
-    required String label,
-    required IconData icon,
-    required bool selected,
-    required ValueChanged<bool> onSelected,
-  }) {
-    return FilterChip(
-      avatar: Icon(
-        icon,
-        size: 17,
-        color: selected ? AppColors.primary : AppColors.textSecondary,
+  Widget _buildActiveFilterChips() {
+    return SizedBox(
+      height: 32,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          if (_selectedType != null)
+            _buildActiveFilterChip(
+              label:
+                  _selectedType == LostFoundType.lost
+                      ? 'Lost'
+                      : 'Found',
+              onDeleted: _removeTypeFilter,
+            ),
+
+          if (_selectedStatus != null)
+            _buildActiveFilterChip(
+              label: _selectedStatus ==
+                      LostFoundStatus.active
+                  ? 'Active'
+                  : 'Resolved',
+              onDeleted: _removeStatusFilter,
+            ),
+
+          if (_selectedCategory != null)
+            _buildActiveFilterChip(
+              label: _selectedCategory!,
+              onDeleted: _removeCategoryFilter,
+            ),
+        ],
       ),
-      label: Text(label),
-      selected: selected,
-      onSelected: onSelected,
-      showCheckmark: false,
     );
   }
 
-  Widget _buildStatusFilterChip({
+  Widget _buildActiveFilterChip({
     required String label,
-    required IconData icon,
-    required bool selected,
-    required ValueChanged<bool> onSelected,
+    required VoidCallback onDeleted,
   }) {
-    return FilterChip(
-      avatar: Icon(
-        icon,
-        size: 17,
-        color: selected ? AppColors.primary : AppColors.textSecondary,
+    return Padding(
+      padding: const EdgeInsets.only(right: 7),
+      child: InputChip(
+        label: Text(label),
+        onDeleted: onDeleted,
+        deleteIconColor: AppColors.textSecondary,
+        backgroundColor: AppColors.primarySoft,
+        side: BorderSide(
+          color:
+              AppColors.primary.withValues(alpha: 0.12),
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.primary,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 3,
+        ),
+        visualDensity: VisualDensity.compact,
       ),
-      label: Text(label),
-      selected: selected,
-      onSelected: onSelected,
-      showCheckmark: false,
     );
   }
 
   Widget _buildSectionHeader(int itemCount) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment:
+          CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Text(
-            _hasActiveFilters ? 'Matching Items' : 'Recent Items',
+            _hasActiveFilters
+                ? 'Matching Items'
+                : 'Recent Items',
             style: AppTextStyles.headingMedium,
           ),
         ),
-        const SizedBox(width: 12),
+
+        const SizedBox(width: 10),
+
         Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: 10,
+            horizontal: 9,
             vertical: 5,
           ),
           decoration: BoxDecoration(
@@ -559,7 +880,8 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            '$itemCount ${itemCount == 1 ? 'item' : 'items'}',
+            '$itemCount '
+            '${itemCount == 1 ? 'item' : 'items'}',
             style: AppTextStyles.bodySmall.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -576,18 +898,20 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 24,
-          vertical: 44,
+          vertical: 36,
         ),
         child: Column(
           children: [
             const SizedBox(
               width: 28,
               height: 28,
-              child: CircularProgressIndicator(strokeWidth: 3),
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Text(
-              'Loading items...',
+              'Finding recent items...',
               style: AppTextStyles.bodyMedium,
             ),
           ],
@@ -602,7 +926,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 24,
-          vertical: 34,
+          vertical: 30,
         ),
         child: Column(
           children: [
@@ -611,7 +935,8 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 58,
               decoration: BoxDecoration(
                 color: AppColors.errorSoft,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius:
+                    BorderRadius.circular(18),
               ),
               child: const Icon(
                 Icons.cloud_off_outlined,
@@ -619,19 +944,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.error,
               ),
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 14),
+
             Text(
               'Unable to load items',
               style: AppTextStyles.headingSmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+
+            const SizedBox(height: 7),
+
             Text(
-              _errorMessage ?? 'Something went wrong. Please try again.',
+              _errorMessage ??
+                  'Something went wrong. Please try again.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 18),
+
+            const SizedBox(height: 16),
+
             OutlinedButton(
               onPressed: _loadItems,
               child: const Text('Try Again'),
@@ -647,23 +979,28 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 16,
+          horizontal: 16,
+          vertical: 12,
         ),
         child: Row(
           children: [
             const Icon(
               Icons.cloud_off_outlined,
               color: AppColors.error,
+              size: 20,
             ),
-            const SizedBox(width: 12),
+
+            const SizedBox(width: 10),
+
             Expanded(
               child: Text(
                 _errorMessage!,
                 style: AppTextStyles.bodySmall,
               ),
             ),
-            const SizedBox(width: 8),
+
+            const SizedBox(width: 6),
+
             TextButton(
               onPressed: _loadItems,
               child: const Text('Retry'),
@@ -680,7 +1017,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 24,
-          vertical: 38,
+          vertical: 34,
         ),
         child: Column(
           children: [
@@ -691,7 +1028,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: _hasActiveFilters
                     ? AppColors.primarySoft
                     : AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius:
+                    BorderRadius.circular(20),
               ),
               child: Icon(
                 _hasActiveFilters
@@ -701,13 +1039,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.primary,
               ),
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 14),
+
             Text(
-              _hasActiveFilters ? 'No matching items' : 'No items found',
+              _hasActiveFilters
+                  ? 'No matching items'
+                  : 'No items found',
               style: AppTextStyles.headingSmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+
+            const SizedBox(height: 7),
+
             Text(
               _hasActiveFilters
                   ? 'Try changing your search or filters.'
@@ -715,11 +1059,15 @@ class _HomeScreenState extends State<HomeScreen> {
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
+
             if (_hasActiveFilters) ...[
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
               OutlinedButton(
-                onPressed: _clearSearchAndFilters,
-                child: const Text('Clear Search & Filters'),
+                onPressed:
+                    _clearSearchAndFilters,
+                child: const Text(
+                  'Clear Search & Filters',
+                ),
               ),
             ],
           ],
@@ -740,7 +1088,8 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isLost = item.type == LostFoundType.lost;
+    final bool isLost =
+        item.type == LostFoundType.lost;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -748,62 +1097,83 @@ class _ItemCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               _buildIcon(isLost),
-              const SizedBox(width: 14),
+
+              const SizedBox(width: 11),
+
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
                             item.title,
                             maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.headingSmall,
+                            overflow:
+                                TextOverflow.ellipsis,
+                            style:
+                                AppTextStyles.headingSmall,
                           ),
                         ),
-                        const SizedBox(width: 8),
+
+                        const SizedBox(width: 7),
+
                         _TypeBadge(
                           label: item.typeLabel,
                           isLost: isLost,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+
+                    const SizedBox(height: 5),
+
                     Text(
                       item.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyMedium,
+                      style:
+                          AppTextStyles.bodyMedium,
                     ),
-                    const SizedBox(height: 13),
+
+                    const SizedBox(height: 9),
+
                     Wrap(
-                      spacing: 12,
-                      runSpacing: 7,
+                      spacing: 9,
+                      runSpacing: 5,
                       children: [
                         _InfoRow(
-                          icon: Icons.location_on_outlined,
+                          icon: Icons
+                              .location_on_outlined,
                           text: item.location,
                         ),
                         _InfoRow(
-                          icon: Icons.calendar_today_outlined,
+                          icon: Icons
+                              .calendar_today_outlined,
                           text: item.date,
                         ),
                         _InfoRow(
-                          icon: Icons.category_outlined,
+                          icon: Icons
+                              .category_outlined,
                           text: item.category,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _ResolutionBadge(status: item.status),
+
+                    const SizedBox(height: 9),
+
+                    _ResolutionBadge(
+                      status: item.status,
+                    ),
                   ],
                 ),
               ),
@@ -816,17 +1186,22 @@ class _ItemCard extends StatelessWidget {
 
   Widget _buildIcon(bool isLost) {
     return Container(
-      width: 52,
-      height: 52,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: isLost ? AppColors.warningSoft : AppColors.successSoft,
-        borderRadius: BorderRadius.circular(15),
+        color: isLost
+            ? AppColors.warningSoft
+            : AppColors.successSoft,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Icon(
         isLost
             ? Icons.help_outline_rounded
             : Icons.check_circle_outline_rounded,
-        color: isLost ? AppColors.warning : AppColors.success,
+        color: isLost
+            ? AppColors.warning
+            : AppColors.success,
+        size: 22,
       ),
     );
   }
@@ -853,7 +1228,7 @@ class _TypeBadge extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 9,
+        horizontal: 8,
         vertical: 5,
       ),
       decoration: BoxDecoration(
@@ -863,7 +1238,7 @@ class _TypeBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
           color: textColor,
         ),
@@ -873,13 +1248,16 @@ class _TypeBadge extends StatelessWidget {
 }
 
 class _ResolutionBadge extends StatelessWidget {
-  const _ResolutionBadge({required this.status});
+  const _ResolutionBadge({
+    required this.status,
+  });
 
   final LostFoundStatus status;
 
   @override
   Widget build(BuildContext context) {
-    final bool isResolved = status == LostFoundStatus.resolved;
+    final bool isResolved =
+        status == LostFoundStatus.resolved;
 
     final Color backgroundColor = isResolved
         ? AppColors.successSoft
@@ -891,7 +1269,7 @@ class _ResolutionBadge extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 9,
+        horizontal: 8,
         vertical: 5,
       ),
       decoration: BoxDecoration(
@@ -905,14 +1283,18 @@ class _ResolutionBadge extends StatelessWidget {
             isResolved
                 ? Icons.check_circle_outline
                 : Icons.circle_outlined,
-            size: 14,
+            size: 13,
             color: foregroundColor,
           ),
+
           const SizedBox(width: 5),
+
           Text(
-            isResolved ? 'Resolved' : 'Active',
+            isResolved
+                ? 'Resolved'
+                : 'Active',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: foregroundColor,
             ),
@@ -939,12 +1321,14 @@ class _InfoRow extends StatelessWidget {
       children: [
         Icon(
           icon,
-          size: 15,
+          size: 14,
           color: AppColors.textSecondary,
         ),
         const SizedBox(width: 4),
         Text(
           text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTextStyles.bodySmall,
         ),
       ],

@@ -69,7 +69,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       if (updatedItem == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('This item is no longer available.')),
+          const SnackBar(
+            content: Text('This item is no longer available.'),
+          ),
         );
 
         Navigator.of(context).pop(true);
@@ -163,7 +165,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Unable to update the item status. Please try again.'),
+          content: Text(
+            'Unable to update the item status. Please try again.',
+          ),
         ),
       );
     }
@@ -217,7 +221,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Item deleted successfully.')),
+        const SnackBar(
+          content: Text('Item deleted successfully.'),
+        ),
       );
 
       Navigator.of(context).pop(true);
@@ -234,7 +240,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Unable to delete the item. Please try again.'),
+          content: Text(
+            'Unable to delete the item. Please try again.',
+          ),
         ),
       );
     }
@@ -247,9 +255,11 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     final bool isResolved = _status == LostFoundStatus.resolved;
 
     final User? currentUser = FirebaseAuth.instance.currentUser;
-    final bool isOwner = currentUser != null && currentUser.uid == item.ownerId;
+    final bool isOwner =
+        currentUser != null && currentUser.uid == item.ownerId;
 
-    final bool isBusy = _isDeleting || _isUpdatingStatus || _isRefreshingItem;
+    final bool isBusy =
+        _isDeleting || _isUpdatingStatus || _isRefreshingItem;
 
     return Scaffold(
       appBar: AppBar(
@@ -283,48 +293,38 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   : const Icon(Icons.delete_outline),
               tooltip: 'Delete Item',
             ),
+            const SizedBox(width: 4),
           ],
         ],
       ),
       body: SafeArea(
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             _buildImageSection(item),
-            const SizedBox(height: 20),
-            _buildTypeAndCategorySection(item: item, isLost: isLost),
+            const SizedBox(height: 18),
+            _buildTypeAndCategorySection(
+              item: item,
+              isLost: isLost,
+            ),
             const SizedBox(height: 14),
             _StatusBadge(status: _status),
+            const SizedBox(height: 16),
+            Text(
+              item.title,
+              style: AppTextStyles.headingLarge.copyWith(
+                fontSize: 26,
+              ),
+            ),
             const SizedBox(height: 18),
-            Text(item.title, style: AppTextStyles.headingLarge),
-            const SizedBox(height: 20),
-            _DetailRow(
-              icon: Icons.description_outlined,
-              label: 'Description',
-              value: item.description,
-            ),
-            const SizedBox(height: 12),
-            _DetailRow(
-              icon: Icons.location_on_outlined,
-              label: 'Location',
-              value: item.location,
-            ),
-            const SizedBox(height: 12),
-            _DetailRow(
-              icon: Icons.calendar_today_outlined,
-              label: 'Date',
-              value: item.date,
-            ),
-            const SizedBox(height: 12),
-            const _DetailRow(
-              icon: Icons.person_outline,
-              label: 'Reported by',
-              value: 'Campus user',
-            ),
+            _buildDetailsSection(item),
             if (isOwner) ...[
               const SizedBox(height: 20),
-              _buildStatusCard(isResolved: isResolved, isBusy: isBusy),
+              _buildStatusCard(
+                isResolved: isResolved,
+                isBusy: isBusy,
+              ),
             ],
           ],
         ),
@@ -335,10 +335,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   Widget _buildImageSection(LostFoundItem item) {
     return Container(
       width: double.infinity,
-      height: 220,
+      height: 230,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
         color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -346,19 +346,30 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           ? Image.network(
               item.imageUrl!,
               fit: BoxFit.cover,
-              loadingBuilder:
-                  (
-                    BuildContext context,
-                    Widget child,
-                    ImageChunkEvent? loadingProgress,
-                  ) {
-                    if (loadingProgress == null) {
-                      return child;
-                    }
+              loadingBuilder: (
+                BuildContext context,
+                Widget child,
+                ImageChunkEvent? loadingProgress,
+              ) {
+                if (loadingProgress == null) {
+                  return child;
+                }
 
-                    return const Center(child: CircularProgressIndicator());
-                  },
-              errorBuilder: (_, _, _) {
+                return const Center(
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (
+                BuildContext context,
+                Object error,
+                StackTrace? stackTrace,
+              ) {
                 return const _ImagePlaceholder(
                   icon: Icons.image_not_supported_outlined,
                   message: 'Image unavailable',
@@ -376,18 +387,19 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     required LostFoundItem item,
     required bool isLost,
   }) {
-    final Color backgroundColor = isLost
-        ? AppColors.warningSoft
-        : AppColors.successSoft;
+    final Color backgroundColor =
+        isLost ? AppColors.warningSoft : AppColors.successSoft;
 
-    final Color foregroundColor = isLost
-        ? AppColors.warning
-        : AppColors.success;
+    final Color foregroundColor =
+        isLost ? AppColors.warning : AppColors.success;
 
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 7,
+          ),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(20),
@@ -406,6 +418,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               Text(
                 item.typeLabel,
                 style: TextStyle(
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: foregroundColor,
                 ),
@@ -413,22 +426,38 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Flexible(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 7,
+            ),
             decoration: BoxDecoration(
               color: AppColors.surfaceMuted,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(
-              item.category,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.category_outlined,
+                  size: 15,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    item.category,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -436,92 +465,144 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     );
   }
 
-  Widget _buildStatusCard({required bool isResolved, required bool isBusy}) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: isResolved
-                        ? AppColors.successSoft
-                        : AppColors.warningSoft,
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(
-                    isResolved
-                        ? Icons.check_circle_outline_rounded
-                        : Icons.circle_outlined,
-                    color: isResolved ? AppColors.success : AppColors.warning,
-                  ),
+  Widget _buildDetailsSection(LostFoundItem item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Item Information',
+          style: AppTextStyles.headingSmall,
+        ),
+        const SizedBox(height: 12),
+        _DetailRow(
+          icon: Icons.description_outlined,
+          label: 'Description',
+          value: item.description,
+        ),
+        const SizedBox(height: 10),
+        _DetailRow(
+          icon: Icons.location_on_outlined,
+          label: 'Location',
+          value: item.location,
+        ),
+        const SizedBox(height: 10),
+        _DetailRow(
+          icon: Icons.calendar_today_outlined,
+          label: 'Date',
+          value: item.date,
+        ),
+        const SizedBox(height: 10),
+        const _DetailRow(
+          icon: Icons.person_outline,
+          label: 'Reported by',
+          value: 'Campus user',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusCard({
+    required bool isResolved,
+    required bool isBusy,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isResolved
+                      ? AppColors.successSoft
+                      : AppColors.warningSoft,
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Item Status', style: AppTextStyles.headingSmall),
-                      const SizedBox(height: 3),
-                      Text(
-                        isResolved
-                            ? 'This item has been resolved.'
-                            : 'This item is currently active.',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: isBusy
-                    ? null
-                    : () {
-                        _updateStatus(
-                          isResolved
-                              ? LostFoundStatus.active
-                              : LostFoundStatus.resolved,
-                        );
-                      },
-                icon: _isUpdatingStatus
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        isResolved
-                            ? Icons.refresh_rounded
-                            : Icons.check_circle_outline_rounded,
-                      ),
-                label: Text(
-                  _isUpdatingStatus
-                      ? 'Updating...'
-                      : isResolved
-                      ? 'Mark as Active'
-                      : 'Mark as Resolved',
+                child: Icon(
+                  isResolved
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.circle_outlined,
+                  color: isResolved
+                      ? AppColors.success
+                      : AppColors.warning,
+                  size: 22,
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Item Status',
+                      style: AppTextStyles.headingSmall,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      isResolved
+                          ? 'This item has been resolved.'
+                          : 'This item is currently active.',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: isBusy
+                  ? null
+                  : () {
+                      _updateStatus(
+                        isResolved
+                            ? LostFoundStatus.active
+                            : LostFoundStatus.resolved,
+                      );
+                    },
+              icon: _isUpdatingStatus
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Icon(
+                      isResolved
+                          ? Icons.refresh_rounded
+                          : Icons.check_circle_outline_rounded,
+                    ),
+              label: Text(
+                _isUpdatingStatus
+                    ? 'Updating...'
+                    : isResolved
+                        ? 'Mark as Active'
+                        : 'Mark as Resolved',
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder({required this.icon, required this.message});
+  const _ImagePlaceholder({
+    required this.icon,
+    required this.message,
+  });
 
   final IconData icon;
   final String message;
@@ -531,9 +612,24 @@ class _ImagePlaceholder extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 52, color: AppColors.textMuted),
-        const SizedBox(height: 10),
-        Text(message, style: AppTextStyles.bodySmall),
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Icon(
+            icon,
+            size: 32,
+            color: AppColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          message,
+          style: AppTextStyles.bodySmall,
+        ),
       ],
     );
   }
@@ -548,18 +644,19 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isResolved = status == LostFoundStatus.resolved;
 
-    final Color backgroundColor = isResolved
-        ? AppColors.successSoft
-        : AppColors.warningSoft;
+    final Color backgroundColor =
+        isResolved ? AppColors.successSoft : AppColors.warningSoft;
 
-    final Color foregroundColor = isResolved
-        ? AppColors.success
-        : AppColors.warning;
+    final Color foregroundColor =
+        isResolved ? AppColors.success : AppColors.warning;
 
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 11,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(20),
@@ -568,7 +665,9 @@ class _StatusBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isResolved ? Icons.check_circle_outline : Icons.circle_outlined,
+              isResolved
+                  ? Icons.check_circle_outline
+                  : Icons.circle_outlined,
               size: 15,
               color: foregroundColor,
             ),
@@ -602,23 +701,27 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
         color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(11),
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 19, color: AppColors.primary),
+            child: Icon(
+              icon,
+              size: 19,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -632,7 +735,10 @@ class _DetailRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(value, style: AppTextStyles.bodyLarge),
+                Text(
+                  value,
+                  style: AppTextStyles.bodyLarge,
+                ),
               ],
             ),
           ),

@@ -9,13 +9,15 @@ class AppTextStyles {
     fontSize: 28,
     fontWeight: FontWeight.w700,
     height: 1.2,
+    letterSpacing: -0.4,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle headingMedium = TextStyle(
     fontSize: 22,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     height: 1.25,
+    letterSpacing: -0.2,
     color: AppColors.textPrimary,
   );
 
@@ -47,6 +49,7 @@ class AppTextStyles {
   static const TextStyle labelMedium = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w600,
+    height: 1.3,
     color: AppColors.textPrimary,
   );
 }

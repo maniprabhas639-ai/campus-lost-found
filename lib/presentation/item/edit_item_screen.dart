@@ -7,7 +7,10 @@ import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
 class EditItemScreen extends StatefulWidget {
-  const EditItemScreen({super.key, required this.item});
+  const EditItemScreen({
+    super.key,
+    required this.item,
+  });
 
   final LostFoundItem item;
 
@@ -34,12 +37,18 @@ class _EditItemScreenState extends State<EditItemScreen> {
   void initState() {
     super.initState();
 
-    _titleController = TextEditingController(text: widget.item.title);
+    _titleController = TextEditingController(
+      text: widget.item.title,
+    );
     _descriptionController = TextEditingController(
       text: widget.item.description,
     );
-    _locationController = TextEditingController(text: widget.item.location);
-    _dateController = TextEditingController(text: widget.item.date);
+    _locationController = TextEditingController(
+      text: widget.item.location,
+    );
+    _dateController = TextEditingController(
+      text: widget.item.date,
+    );
 
     _selectedType = widget.item.type;
 
@@ -54,6 +63,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     _descriptionController.dispose();
     _locationController.dispose();
     _dateController.dispose();
+
     super.dispose();
   }
 
@@ -63,12 +73,12 @@ class _EditItemScreenState extends State<EditItemScreen> {
     }
 
     final DateTime now = DateTime.now();
+
     final DateTime initialDate =
         _parseDate(_dateController.text) ?? now;
 
-    final DateTime safeInitialDate = initialDate.isAfter(now)
-        ? now
-        : initialDate;
+    final DateTime safeInitialDate =
+        initialDate.isAfter(now) ? now : initialDate;
 
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -259,161 +269,53 @@ class _EditItemScreenState extends State<EditItemScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _buildIntroCard(),
+                const SizedBox(height: 24),
+
                 Text(
-                  'Update your item details',
+                  'What are you reporting?',
                   style: AppTextStyles.headingMedium,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Make sure the information is accurate before saving.',
-                  style: AppTextStyles.bodyMedium,
-                ),
-                const SizedBox(height: 20),
-                _buildSectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Item Type',
-                        style: AppTextStyles.labelMedium,
-                      ),
-                      const SizedBox(height: 10),
-                      SegmentedButton<LostFoundType>(
-                        segments: const [
-                          ButtonSegment<LostFoundType>(
-                            value: LostFoundType.lost,
-                            label: Text('Lost'),
-                            icon: Icon(Icons.help_outline_rounded),
-                          ),
-                          ButtonSegment<LostFoundType>(
-                            value: LostFoundType.found,
-                            label: Text('Found'),
-                            icon: Icon(
-                              Icons.check_circle_outline_rounded,
-                            ),
-                          ),
-                        ],
-                        selected: <LostFoundType>{_selectedType},
-                        onSelectionChanged: _isSaving
-                            ? null
-                            : (Set<LostFoundType> selection) {
-                                setState(() {
-                                  _selectedType = selection.first;
-                                });
-                              },
-                      ),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 12),
-                _buildSectionCard(
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _titleController,
-                        enabled: !_isSaving,
-                        textInputAction: TextInputAction.next,
-                        maxLength: 100,
-                        decoration: const InputDecoration(
-                          labelText: 'Item Title',
-                          hintText: 'e.g. Black Backpack',
-                          prefixIcon: Icon(
-                            Icons.inventory_2_outlined,
-                          ),
-                        ),
-                        validator: _validateTitle,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        enabled: !_isSaving,
-                        maxLines: 4,
-                        maxLength: 500,
-                        textInputAction: TextInputAction.newline,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          hintText: 'Describe the item',
-                          prefixIcon: Padding(
-                            padding: EdgeInsets.only(bottom: 52),
-                            child: Icon(
-                              Icons.description_outlined,
-                            ),
-                          ),
-                          alignLabelWithHint: true,
-                        ),
-                        validator: _validateDescription,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildSectionCard(
-                  child: Column(
-                    children: [
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedCategory,
-                        decoration: const InputDecoration(
-                          labelText: 'Category',
-                          prefixIcon: Icon(
-                            Icons.category_outlined,
-                          ),
-                        ),
-                        items: ItemCategories.values.map(
-                          (String category) {
-                            return DropdownMenuItem<String>(
-                              value: category,
-                              child: Text(category),
-                            );
-                          },
-                        ).toList(),
-                        onChanged: _isSaving
-                            ? null
-                            : (String? value) {
-                                if (value == null) {
-                                  return;
-                                }
 
-                                setState(() {
-                                  _selectedCategory = value;
-                                });
-                              },
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTypeCard(
+                        type: LostFoundType.lost,
+                        title: 'Lost',
+                        subtitle: 'I lost this item',
+                        icon: Icons.help_outline_rounded,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _locationController,
-                        enabled: !_isSaving,
-                        textInputAction: TextInputAction.next,
-                        maxLength: 100,
-                        decoration: const InputDecoration(
-                          labelText: 'Location',
-                          hintText: 'Where was it lost or found?',
-                          prefixIcon: Icon(
-                            Icons.location_on_outlined,
-                          ),
-                        ),
-                        validator: _validateLocation,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTypeCard(
+                        type: LostFoundType.found,
+                        title: 'Found',
+                        subtitle: 'I found this item',
+                        icon: Icons.check_circle_outline_rounded,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _dateController,
-                        enabled: !_isSaving,
-                        readOnly: true,
-                        onTap: _isSaving ? null : _selectDate,
-                        decoration: const InputDecoration(
-                          labelText: 'Date',
-                          prefixIcon: Icon(
-                            Icons.calendar_today_outlined,
-                          ),
-                          suffixIcon: Icon(
-                            Icons.edit_calendar_outlined,
-                          ),
-                        ),
-                        validator: _validateDate,
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+
+                const SizedBox(height: 28),
+
+                Text(
+                  'Item details',
+                  style: AppTextStyles.headingMedium,
+                ),
+                const SizedBox(height: 12),
+
+                _buildDetailsCard(),
+
+                const SizedBox(height: 16),
+
+                _buildTipCard(),
+
                 const SizedBox(height: 20),
+
                 SizedBox(
                   height: 52,
                   child: FilledButton.icon(
@@ -440,19 +342,274 @@ class _EditItemScreenState extends State<EditItemScreen> {
     );
   }
 
-  Widget _buildSectionCard({
-    required Widget child,
+  Widget _buildIntroCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.edit_note_rounded,
+              size: 30,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Update your item',
+                  style: AppTextStyles.headingSmall,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Keep the information accurate so students can find it easily.',
+                  style: AppTextStyles.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypeCard({
+    required LostFoundType type,
+    required String title,
+    required String subtitle,
+    required IconData icon,
   }) {
+    final bool isSelected = _selectedType == type;
+    final bool isLost = type == LostFoundType.lost;
+
+    final Color accentColor =
+        isLost ? AppColors.warning : AppColors.success;
+
+    final Color selectedBackground =
+        isLost ? AppColors.warningSoft : AppColors.successSoft;
+
+    return GestureDetector(
+      onTap: _isSaving
+          ? null
+          : () {
+              setState(() {
+                _selectedType = type;
+              });
+            },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? selectedBackground : AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected
+                ? accentColor.withValues(alpha: 0.45)
+                : AppColors.border,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.surface
+                    : AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected
+                    ? accentColor
+                    : AppColors.textSecondary,
+                size: 23,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              style: AppTextStyles.labelMedium.copyWith(
+                color: isSelected
+                    ? accentColor
+                    : AppColors.textPrimary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: AppTextStyles.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+      ),
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _titleController,
+            enabled: !_isSaving,
+            textInputAction: TextInputAction.next,
+            maxLength: 100,
+            decoration: const InputDecoration(
+              labelText: 'Item title',
+              hintText: 'e.g. Black Backpack',
+              prefixIcon: Icon(Icons.inventory_2_outlined),
+            ),
+            validator: _validateTitle,
+          ),
+          const SizedBox(height: 16),
+
+          DropdownButtonFormField<String>(
+            initialValue: _selectedCategory,
+            decoration: const InputDecoration(
+              labelText: 'Category',
+              prefixIcon: Icon(Icons.category_outlined),
+            ),
+            items: ItemCategories.values.map(
+              (String category) {
+                return DropdownMenuItem<String>(
+                  value: category,
+                  child: Text(category),
+                );
+              },
+            ).toList(),
+            onChanged: _isSaving
+                ? null
+                : (String? value) {
+                    if (value == null) {
+                      return;
+                    }
+
+                    setState(() {
+                      _selectedCategory = value;
+                    });
+                  },
+          ),
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _descriptionController,
+            enabled: !_isSaving,
+            maxLines: 4,
+            maxLength: 500,
+            textInputAction: TextInputAction.newline,
+            decoration: const InputDecoration(
+              labelText: 'Description',
+              hintText: 'Describe the item',
+              prefixIcon: Padding(
+                padding: EdgeInsets.only(bottom: 52),
+                child: Icon(
+                  Icons.description_outlined,
+                ),
+              ),
+              alignLabelWithHint: true,
+            ),
+            validator: _validateDescription,
+          ),
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _dateController,
+            enabled: !_isSaving,
+            readOnly: true,
+            onTap: _isSaving ? null : _selectDate,
+            decoration: const InputDecoration(
+              labelText: 'Date',
+              hintText: 'Select date',
+              prefixIcon: Icon(
+                Icons.calendar_today_outlined,
+              ),
+              suffixIcon: Icon(
+                Icons.edit_calendar_outlined,
+              ),
+            ),
+            validator: _validateDate,
+          ),
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _locationController,
+            enabled: !_isSaving,
+            textInputAction: TextInputAction.done,
+            maxLength: 100,
+            decoration: const InputDecoration(
+              labelText: 'Location',
+              hintText: 'Where was it lost or found?',
+              prefixIcon: Icon(
+                Icons.location_on_outlined,
+              ),
+            ),
+            validator: _validateLocation,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTipCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 13,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppColors.border,
         ),
       ),
-      child: child,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.lightbulb_outline_rounded,
+            size: 21,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Tip: Include specific details such as color, brand, '
+              'or identifying marks when possible.',
+              style: AppTextStyles.bodySmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

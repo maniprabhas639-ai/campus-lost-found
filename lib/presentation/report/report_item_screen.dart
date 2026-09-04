@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/item_categories.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/firestore_service.dart';
 
@@ -214,46 +215,16 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
           key: _formKey,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             children: [
-              Text(
-                'Report a Lost or Found Item',
-                style: AppTextStyles.headingLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Provide the details below so other students can help.',
-                style: AppTextStyles.bodyMedium,
-              ),
+              _buildIntroSection(),
               const SizedBox(height: 24),
-              Text(
-                'Item Type',
-                style: AppTextStyles.headingMedium,
-              ),
-              const SizedBox(height: 8),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment<String>(
-                    value: 'Lost',
-                    label: Text('Lost'),
-                    icon: Icon(Icons.help_outline),
-                  ),
-                  ButtonSegment<String>(
-                    value: 'Found',
-                    label: Text('Found'),
-                    icon: Icon(Icons.check_circle_outline),
-                  ),
-                ],
-                selected: <String>{_selectedType},
-                onSelectionChanged: _isSubmitting
-                    ? null
-                    : (Set<String> selection) {
-                        setState(() {
-                          _selectedType = selection.first;
-                        });
-                      },
-              ),
+              _buildSectionTitle('What are you reporting?'),
+              const SizedBox(height: 10),
+              _buildTypeSelector(),
               const SizedBox(height: 24),
+              _buildSectionTitle('Item details'),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _titleController,
                 enabled: !_isSubmitting,
@@ -335,7 +306,9 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                 ),
                 validator: _validateLocation,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 12),
+              _buildHelpfulTip(),
+              const SizedBox(height: 24),
               SizedBox(
                 height: 52,
                 child: FilledButton.icon(
@@ -353,6 +326,216 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
                     _isSubmitting ? 'Submitting...' : 'Submit Report',
                   ),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntroSection() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.add_box_outlined,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Report a Lost or Found Item',
+                  style: AppTextStyles.headingSmall,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Provide accurate details so other students can help.',
+                  style: AppTextStyles.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: AppTextStyles.headingSmall,
+    );
+  }
+
+  Widget _buildTypeSelector() {
+    return Row(
+      children: [
+        Expanded(
+          child: _TypeOptionCard(
+            title: 'Lost',
+            subtitle: 'I lost this item',
+            icon: Icons.help_outline_rounded,
+            isSelected: _selectedType == 'Lost',
+            color: AppColors.warning,
+            backgroundColor: AppColors.warningSoft,
+            onTap: _isSubmitting
+                ? null
+                : () {
+                    setState(() {
+                      _selectedType = 'Lost';
+                    });
+                  },
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _TypeOptionCard(
+            title: 'Found',
+            subtitle: 'I found this item',
+            icon: Icons.check_circle_outline_rounded,
+            isSelected: _selectedType == 'Found',
+            color: AppColors.success,
+            backgroundColor: AppColors.successSoft,
+            onTap: _isSubmitting
+                ? null
+                : () {
+                    setState(() {
+                      _selectedType = 'Found';
+                    });
+                  },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHelpfulTip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.lightbulb_outline_rounded,
+            size: 19,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Tip: Include specific details such as color, '
+              'brand, or identifying marks when possible.',
+              style: AppTextStyles.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TypeOptionCard extends StatelessWidget {
+  const _TypeOptionCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.color,
+    required this.backgroundColor,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isSelected;
+  final Color color;
+  final Color backgroundColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isSelected ? backgroundColor : AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? color.withValues(alpha: 0.35)
+                  : AppColors.border,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.surface
+                      : AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected ? color : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 11),
+              Text(
+                title,
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: isSelected
+                      ? color
+                      : AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmall,
               ),
             ],
           ),

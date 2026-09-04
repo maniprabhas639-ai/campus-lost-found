@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/routes/app_routes.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
 
@@ -66,83 +67,287 @@ class ProfileScreen extends StatelessWidget {
                 ? email.split('@').first
                 : 'Student';
 
+    final String initial = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'S';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            Center(
-              child: CircleAvatar(
-                radius: 42,
-                child: Text(
-                  displayName.isNotEmpty
-                      ? displayName[0].toUpperCase()
-                      : 'S',
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              displayName,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.headingLarge,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              email,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium,
-            ),
-            const SizedBox(height: 32),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.verified_user_outlined),
-                      title: Text('Account'),
-                      subtitle: Text('Signed in with Firebase Authentication'),
-                    ),
-                    const Divider(),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.inventory_2_outlined),
-                      title: const Text('My Posts'),
-                      subtitle: const Text(
-                        'View the items you have reported',
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.of(context).pushNamed(
-                          AppRoutes.myPosts,
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
+            _buildProfileHeader(
+              displayName: displayName,
+              email: email,
+              initial: initial,
             ),
             const SizedBox(height: 24),
+            const Text(
+              'Account',
+              style: AppTextStyles.headingSmall,
+            ),
+            const SizedBox(height: 10),
+            _buildAccountCard(
+              email: email,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Your Activity',
+              style: AppTextStyles.headingSmall,
+            ),
+            const SizedBox(height: 10),
+            _buildMyPostsCard(context),
+            const SizedBox(height: 28),
             SizedBox(
               height: 52,
               child: OutlinedButton.icon(
                 onPressed: () => _signOut(context),
-                icon: const Icon(Icons.logout),
+                icon: const Icon(Icons.logout_rounded),
                 label: const Text('Log Out'),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileHeader({
+    required String displayName,
+    required String email,
+    required String initial,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 82,
+            height: 82,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.12),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            displayName,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.headingMedium,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            email,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodyMedium,
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 11,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.verified_user_outlined,
+                  size: 15,
+                  color: AppColors.success,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Campus account',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.success,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountCard({
+    required String email,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+      ),
+      child: Column(
+        children: [
+          _ProfileInfoRow(
+            icon: Icons.email_outlined,
+            title: 'Email',
+            value: email,
+          ),
+          const Padding(
+            padding: EdgeInsets.only(left: 50, top: 14, bottom: 14),
+            child: Divider(
+              height: 1,
+            ),
+          ),
+          const _ProfileInfoRow(
+            icon: Icons.verified_user_outlined,
+            title: 'Authentication',
+            value: 'Firebase Authentication',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMyPostsCard(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {
+        Navigator.of(context).pushNamed(
+          AppRoutes.myPosts,
+        );
+      },
+      child: Ink(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: AppColors.border,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Posts',
+                    style: AppTextStyles.headingSmall,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'View and manage the items you reported.',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileInfoRow extends StatelessWidget {
+  const _ProfileInfoRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(
+            icon,
+            size: 19,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
