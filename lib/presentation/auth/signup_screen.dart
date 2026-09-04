@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/firestore_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,12 +16,14 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
   final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -28,6 +31,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -52,9 +56,24 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      await _authService.signUp(
+      final UserCredential credential = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+      );
+
+      final User? user = credential.user;
+
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'Unable to retrieve the newly created account.',
+        );
+      }
+
+      await _firestoreService.saveUserProfile(
+        userId: user.uid,
+        username: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
       );
 
       await _authService.sendEmailVerification();
@@ -74,6 +93,20 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       _showMessage(_getAuthErrorMessage(e));
+    } on FirebaseException catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      if (e.code == 'permission-denied') {
+        _showMessage(
+          'Account created, but the username could not be saved. Please check your connection and try again.',
+        );
+      } else {
+        _showMessage(
+          'Unable to save your username. Please try again.',
+        );
+      }
     } catch (_) {
       if (!mounted) {
         return;
@@ -166,9 +199,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     Text(
                       'Campus Lost & Found',
                       style: AppTextStyles.bodyMedium.copyWith(
@@ -176,22 +207,48 @@ class _SignupScreenState extends State<SignupScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     const Text(
                       'Create your account',
                       style: AppTextStyles.headingLarge,
                     ),
-
                     const SizedBox(height: 8),
-
                     const Text(
                       'Join the campus community to report and find lost items.',
                       style: AppTextStyles.bodyMedium,
                     ),
-
                     const SizedBox(height: 32),
+
+                    TextFormField(
+                      controller: _usernameController,
+                      enabled: !_isLoading,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        hintText: 'Enter your username',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      validator: (value) {
+                        final String username = value?.trim() ?? '';
+
+                        if (username.isEmpty) {
+                          return 'Please enter a username';
+                        }
+
+                        if (username.length < 2) {
+                          return 'Username must be at least 2 characters';
+                        }
+
+                        if (username.length > 30) {
+                          return 'Username must be 30 characters or less';
+                        }
+
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _emailController,

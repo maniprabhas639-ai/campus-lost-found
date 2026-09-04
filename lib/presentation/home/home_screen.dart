@@ -29,14 +29,16 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isRefreshing = false;
   bool _hasLoadedOnce = false;
   String? _errorMessage;
+  String _userName = 'Student';
 
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
 
-    _searchController.addListener(_onSearchChanged);
-    _loadItems();
-  }
+  _searchController.addListener(_onSearchChanged);
+  _loadItems();
+  _loadUserName();
+}
 
   Future<void> _loadItems() async {
     if (_isRefreshing) {
@@ -164,23 +166,28 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  String get _userName {
-    final User? user =
-        FirebaseAuth.instance.currentUser;
+  Future<void> _loadUserName() async {
+  final User? user = FirebaseAuth.instance.currentUser;
 
-    if (user?.displayName != null &&
-        user!.displayName!.trim().isNotEmpty) {
-      return user.displayName!.trim();
-    }
-
-    final String? email = user?.email;
-
-    if (email != null && email.contains('@')) {
-      return email.split('@').first;
-    }
-
-    return 'Student';
+  if (user == null) {
+    return;
   }
+
+  try {
+    final String? username =
+        await _firestoreService.getUsername(user.uid);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _userName = username ?? 'Student';
+    });
+  } catch (error) {
+    debugPrint('HOME USERNAME ERROR: $error');
+  }
+}
 
   Future<void> _showReportMessage() async {
     await Navigator.of(context).pushNamed(

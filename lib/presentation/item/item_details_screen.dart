@@ -143,13 +143,14 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         _isUpdatingStatus = false;
       });
 
+      if (newStatus == LostFoundStatus.resolved) {
+        Navigator.of(context).pop(true);
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            newStatus == LostFoundStatus.resolved
-                ? 'Item marked as resolved.'
-                : 'Item marked as active.',
-          ),
+        const SnackBar(
+          content: Text('Item marked as active.'),
         ),
       );
     } catch (error) {

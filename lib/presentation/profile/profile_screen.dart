@@ -5,11 +5,65 @@ import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/firestore_service.dart';
 
-class ProfileScreen extends StatelessWidget {
-  ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
+
+  String _userName = 'Student';
+  bool _isLoadingUserName = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final User? user = _authService.currentUser;
+
+    if (user == null) {
+      if (mounted) {
+        setState(() {
+          _isLoadingUserName = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final String? username =
+          await _firestoreService.getUsername(user.uid);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _userName = username ?? 'Student';
+        _isLoadingUserName = false;
+      });
+    } catch (error) {
+      debugPrint('PROFILE USERNAME ERROR: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _userName = 'Student';
+        _isLoadingUserName = false;
+      });
+    }
+  }
 
   Future<void> _signOut(BuildContext context) async {
     final bool? shouldLogout = await showDialog<bool>(
@@ -60,14 +114,12 @@ class ProfileScreen extends StatelessWidget {
 
     final String email = user?.email ?? 'No email available';
 
-    final String displayName =
-        user?.displayName?.trim().isNotEmpty == true
-            ? user!.displayName!.trim()
-            : email.contains('@')
-                ? email.split('@').first
-                : 'Student';
+    final String displayName = _isLoadingUserName
+        ? 'Loading...'
+        : _userName;
 
-    final String initial = displayName.isNotEmpty
+    final String initial = displayName.isNotEmpty &&
+            displayName != 'Loading...'
         ? displayName[0].toUpperCase()
         : 'S';
 

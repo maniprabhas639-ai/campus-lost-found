@@ -4,18 +4,53 @@ import '../models/lost_found_item.dart';
 
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
   CollectionReference<Map<String, dynamic>> get _itemsCollection =>
       _firestore.collection('lost_found_items');
 
-  Future<List<LostFoundItem>> getItems() async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
-        .get();
+  CollectionReference<Map<String, dynamic>> get _usersCollection =>
+      _firestore.collection('users');
 
-    return snapshot.docs
+  Future<List<LostFoundItem>> getItems() async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _itemsCollection
+            .where('status', isEqualTo: 'active')
+            .get();
+
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> documents =
+        List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+      snapshot.docs,
+    );
+
+    documents.sort(
+      (
+        QueryDocumentSnapshot<Map<String, dynamic>> first,
+        QueryDocumentSnapshot<Map<String, dynamic>> second,
+      ) {
+        final dynamic firstCreatedAt = first.data()['createdAt'];
+        final dynamic secondCreatedAt = second.data()['createdAt'];
+
+        if (firstCreatedAt is Timestamp &&
+            secondCreatedAt is Timestamp) {
+          return secondCreatedAt.compareTo(firstCreatedAt);
+        }
+
+        if (firstCreatedAt is Timestamp) {
+          return -1;
+        }
+
+        if (secondCreatedAt is Timestamp) {
+          return 1;
+        }
+
+        return 0;
+      },
+    );
+
+    return documents
         .map(
           (QueryDocumentSnapshot<Map<String, dynamic>> document) =>
               LostFoundItem.fromFirestore(document),
@@ -35,9 +70,10 @@ class FirestoreService {
   }
 
   Future<List<LostFoundItem>> getItemsByOwner(String ownerId) async {
-    final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
-        .where('ownerId', isEqualTo: ownerId)
-        .get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _itemsCollection
+            .where('ownerId', isEqualTo: ownerId)
+            .get();
 
     return snapshot.docs
         .map(
@@ -45,6 +81,37 @@ class FirestoreService {
               LostFoundItem.fromFirestore(document),
         )
         .toList();
+  }
+
+  Future<void> saveUserProfile({
+    required String userId,
+    required String username,
+    required String email,
+  }) async {
+    await _usersCollection.doc(userId).set(
+      {
+        'username': username.trim(),
+        'email': email.trim(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  Future<String?> getUsername(String userId) async {
+    final DocumentSnapshot<Map<String, dynamic>> document =
+        await _usersCollection.doc(userId).get();
+
+    if (!document.exists) {
+      return null;
+    }
+
+    final String? username = document.data()?['username'] as String?;
+
+    if (username == null || username.trim().isEmpty) {
+      return null;
+    }
+
+    return username.trim();
   }
 
   Future<void> createItem({
@@ -66,6 +133,7 @@ class FirestoreService {
       'date': date,
       'ownerId': ownerId,
       'status': 'active',
+      'createdAt': FieldValue.serverTimestamp(),
     };
 
     if (imageUrl != null && imageUrl.trim().isNotEmpty) {
