@@ -9,9 +9,10 @@ import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({required this.item, super.key});
+  const ChatScreen({required this.item, this.conversationId, super.key});
 
   final LostFoundItem item;
+  final String? conversationId;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -47,40 +48,74 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _openConversation() async {
     final User? currentUser = FirebaseAuth.instance.currentUser;
-    final String? ownerId = widget.item.ownerId;
 
     if (currentUser == null) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'You must be signed in to start a chat.';
-      });
-      return;
-    }
-
-    if (ownerId == null || ownerId.trim().isEmpty) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'This item does not have a valid owner.';
-      });
-      return;
-    }
-
-    if (currentUser.uid == ownerId) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'You cannot message yourself.';
+        _errorMessage = 'You must be signed in to open this chat.';
       });
       return;
     }
 
     try {
-      final Conversation conversation = await _firestoreService
-          .createConversation(
-            itemId: widget.item.id,
-            itemTitle: widget.item.title,
-            currentUserId: currentUser.uid,
-            ownerId: ownerId,
-          );
+      final Conversation? existingConversation = widget.conversationId == null
+          ? null
+          : await _firestoreService.getConversation(
+              conversationId: widget.conversationId!,
+            );
+
+      final Conversation conversation;
+
+      if (widget.conversationId != null) {
+        if (existingConversation == null) {
+          if (!mounted) {
+            return;
+          }
+
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'This conversation is no longer available.';
+          });
+          return;
+        }
+
+        conversation = existingConversation;
+      } else {
+        final String? ownerId = widget.item.ownerId;
+
+        if (ownerId == null || ownerId.trim().isEmpty) {
+          if (!mounted) {
+            return;
+          }
+
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'This item does not have a valid owner.';
+          });
+          return;
+        }
+
+        if (currentUser.uid == ownerId) {
+          if (!mounted) {
+            return;
+          }
+
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'You cannot message yourself.';
+          });
+          return;
+        }
+
+        conversation = await _firestoreService.createConversation(
+          itemId: widget.item.id,
+          itemTitle: widget.item.title,
+          currentUserId: currentUser.uid,
+          ownerId: ownerId,
+        );
+      }
+
+      await _markConversationAsRead(conversation, currentUser.uid);
 
       if (!mounted) {
         return;
@@ -102,6 +137,24 @@ class _ChatScreenState extends State<ChatScreen> {
         _isLoading = false;
         _errorMessage = 'Unable to open this conversation. Please try again.';
       });
+    }
+  }
+
+  Future<void> _markConversationAsRead(
+    Conversation conversation,
+    String userId,
+  ) async {
+    if (!conversation.isUnreadFor(userId)) {
+      return;
+    }
+
+    try {
+      await _firestoreService.markConversationAsRead(
+        conversationId: conversation.id,
+        userId: userId,
+      );
+    } catch (error) {
+      debugPrint('MARK CONVERSATION AS READ ERROR: $error');
     }
   }
 

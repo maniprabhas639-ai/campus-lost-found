@@ -226,6 +226,7 @@ class FirestoreService {
         'updatedAt': FieldValue.serverTimestamp(),
         'lastMessage': '',
         'lastMessageSenderId': null,
+        'readBy': <String>[currentUserId],
       });
     }
 
@@ -371,8 +372,18 @@ class FirestoreService {
       'lastMessage': trimmedText,
       'lastMessageSenderId': senderId,
       'updatedAt': FieldValue.serverTimestamp(),
+      'readBy': <String>[senderId],
     });
 
     await batch.commit();
+  }
+
+  Future<void> markConversationAsRead({
+    required String conversationId,
+    required String userId,
+  }) async {
+    await _conversationsCollection.doc(conversationId).update({
+      'readBy': FieldValue.arrayUnion(<String>[userId]),
+    });
   }
 }

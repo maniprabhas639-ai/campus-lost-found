@@ -65,11 +65,26 @@ class AppRouter {
         );
 
       case AppRoutes.chat:
-        final LostFoundItem item = settings.arguments! as LostFoundItem;
+        final Object arguments = settings.arguments!;
+
+        final LostFoundItem item;
+        final String? conversationId;
+
+        if (arguments is LostFoundItem) {
+          item = arguments;
+          conversationId = null;
+        } else {
+          final Map<String, dynamic> chatArguments =
+              arguments as Map<String, dynamic>;
+
+          item = chatArguments['item'] as LostFoundItem;
+          conversationId = chatArguments['conversationId'] as String?;
+        }
 
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => ChatScreen(item: item),
+          builder: (_) =>
+              ChatScreen(item: item, conversationId: conversationId),
         );
 
       case AppRoutes.conversations:

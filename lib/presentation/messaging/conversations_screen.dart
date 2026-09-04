@@ -115,9 +115,10 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   ) {
     final String time = _formatConversationTime(conversation);
     final bool hasLastMessage = conversation.lastMessage.trim().isNotEmpty;
+    final bool isUnread = conversation.isUnreadFor(currentUserId);
 
     return Material(
-      color: AppColors.surface,
+      color: isUnread ? AppColors.primarySoft : AppColors.surface,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -137,13 +138,21 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             return;
           }
 
-          Navigator.of(context).pushNamed(AppRoutes.chat, arguments: item);
+          Navigator.of(context).pushNamed(
+            AppRoutes.chat,
+            arguments: <String, dynamic>{
+              'item': item,
+              'conversationId': conversation.id,
+            },
+          );
         },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(
+              color: isUnread ? AppColors.primary : AppColors.border,
+            ),
           ),
           child: Row(
             children: [
@@ -151,12 +160,12 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.chat_bubble_outline_rounded,
-                  color: AppColors.primary,
+                  color: isUnread ? AppColors.primary : AppColors.textSecondary,
                 ),
               ),
               const SizedBox(width: 14),
@@ -169,7 +178,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: isUnread
+                            ? FontWeight.w800
+                            : FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -180,9 +191,14 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: hasLastMessage
+                        color: isUnread
+                            ? AppColors.textPrimary
+                            : hasLastMessage
                             ? AppColors.textSecondary
                             : AppColors.textMuted,
+                        fontWeight: isUnread
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                       ),
                     ),
                   ],
@@ -196,13 +212,34 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                     Text(
                       time,
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textMuted,
+                        color: isUnread
+                            ? AppColors.primary
+                            : AppColors.textMuted,
+                        fontWeight: isUnread
+                            ? FontWeight.w700
+                            : FontWeight.w400,
                       ),
                     ),
                   const SizedBox(height: 8),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textMuted,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isUnread) ...[
+                        Container(
+                          width: 9,
+                          height: 9,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textMuted,
+                      ),
+                    ],
                   ),
                 ],
               ),

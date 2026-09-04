@@ -10,6 +10,7 @@ class Conversation {
     this.updatedAt,
     this.lastMessage = '',
     this.lastMessageSenderId,
+    this.readBy = const <String>[],
   });
 
   final String id;
@@ -20,6 +21,7 @@ class Conversation {
   final Timestamp? updatedAt;
   final String lastMessage;
   final String? lastMessageSenderId;
+  final List<String> readBy;
 
   factory Conversation.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> document,
@@ -28,6 +30,9 @@ class Conversation {
 
     final List<dynamic> rawParticipantIds =
         data['participantIds'] as List<dynamic>? ?? <dynamic>[];
+
+    final List<dynamic> rawReadBy =
+        data['readBy'] as List<dynamic>? ?? <dynamic>[];
 
     return Conversation(
       id: document.id,
@@ -38,6 +43,7 @@ class Conversation {
       updatedAt: data['updatedAt'] as Timestamp?,
       lastMessage: data['lastMessage'] as String? ?? '',
       lastMessageSenderId: data['lastMessageSenderId'] as String?,
+      readBy: rawReadBy.whereType<String>().toList(),
     );
   }
 
@@ -49,5 +55,17 @@ class Conversation {
     }
 
     return null;
+  }
+
+  bool isUnreadFor(String userId) {
+    if (lastMessage.trim().isEmpty || lastMessageSenderId == null) {
+      return false;
+    }
+
+    if (lastMessageSenderId == userId) {
+      return false;
+    }
+
+    return !readBy.contains(userId);
   }
 }
