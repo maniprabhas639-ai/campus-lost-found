@@ -18,6 +18,14 @@ import 'app_routes.dart';
 class AppRouter {
   AppRouter._();
 
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  static String? currentRouteName;
+
+  static final NavigatorObserver navigatorObserver =
+      _AppNavigatorObserver();
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.splash:
@@ -120,5 +128,42 @@ class AppRouter {
               const Scaffold(body: Center(child: Text('Route not found'))),
         );
     }
+  }
+}
+
+class _AppNavigatorObserver extends NavigatorObserver {
+  void _updateCurrentRoute(Route<dynamic>? route) {
+    AppRouter.currentRouteName = route?.settings.name;
+
+    debugPrint(
+      'Current route: ${AppRouter.currentRouteName}',
+    );
+  }
+
+  @override
+  void didPush(
+    Route<dynamic> route,
+    Route<dynamic>? previousRoute,
+  ) {
+    _updateCurrentRoute(route);
+    super.didPush(route, previousRoute);
+  }
+
+  @override
+  void didReplace({
+    Route<dynamic>? newRoute,
+    Route<dynamic>? oldRoute,
+  }) {
+    _updateCurrentRoute(newRoute);
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+  }
+
+  @override
+  void didPop(
+    Route<dynamic> route,
+    Route<dynamic>? previousRoute,
+  ) {
+    _updateCurrentRoute(previousRoute);
+    super.didPop(route, previousRoute);
   }
 }

@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'core/routes/app_router.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
+import 'data/services/notification_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -13,6 +15,12 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  FirebaseMessaging.onBackgroundMessage(
+    firebaseMessagingBackgroundHandler,
+  );
+
+  await NotificationService().initialize();
 
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
@@ -27,9 +35,13 @@ class CampusLostFoundApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Campus Lost & Found',
-      theme: AppTheme.lightTheme,
+  debugShowCheckedModeBanner: false,
+  title: 'Campus Lost & Found',
+  navigatorKey: AppRouter.navigatorKey,
+  navigatorObservers: <NavigatorObserver>[
+    AppRouter.navigatorObserver,
+  ],
+  theme: AppTheme.lightTheme,
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRouter.generateRoute,
     );
