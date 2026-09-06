@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -72,9 +73,11 @@ class NotificationService {
       'Notification permission: ${settings.authorizationStatus}',
     );
 
-    final String? token = await _messaging.getToken();
+    await _registerCurrentFcmToken();
 
-    debugPrint('FCM TOKEN: $token');
+    FirebaseMessaging.instance.onTokenRefresh.listen(
+      _handleTokenRefresh,
+    );
 
     FirebaseMessaging.onMessage.listen(
       _handleForegroundMessage,
@@ -88,7 +91,6 @@ class NotificationService {
         await _messaging.getInitialMessage();
 
     if (initialMessage != null) {
-
       debugPrint(
         'Initial notification received: ${initialMessage.messageId}',
       );
@@ -103,6 +105,69 @@ class NotificationService {
           'Initial notification contains no navigation data.',
         );
       }
+    }
+  }
+
+  Future<void> _registerCurrentFcmToken() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      debugPrint(
+        'FCM token registration skipped: no authenticated user.',
+      );
+      return;
+    }
+
+    try {
+      final String? token = await _messaging.getToken();
+
+      if (token == null || token.trim().isEmpty) {
+        debugPrint(
+          'FCM token registration skipped: token unavailable.',
+        );
+        return;
+      }
+
+      await _firestoreService.saveFcmToken(
+        userId: user.uid,
+        token: token,
+        platform: defaultTargetPlatform.name,
+      );
+
+      debugPrint(
+        'FCM token registered successfully for user: ${user.uid}',
+      );
+    } catch (error) {
+      debugPrint(
+        'FCM TOKEN REGISTRATION ERROR: $error',
+      );
+    }
+  }
+
+  Future<void> _handleTokenRefresh(String token) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      debugPrint(
+        'FCM token refresh skipped: no authenticated user.',
+      );
+      return;
+    }
+
+    try {
+      await _firestoreService.saveFcmToken(
+        userId: user.uid,
+        token: token,
+        platform: defaultTargetPlatform.name,
+      );
+
+      debugPrint(
+        'FCM token refreshed successfully for user: ${user.uid}',
+      );
+    } catch (error) {
+      debugPrint(
+        'FCM TOKEN REFRESH ERROR: $error',
+      );
     }
   }
 
@@ -253,15 +318,15 @@ class NotificationService {
 
     final String? currentRoute = AppRouter.currentRouteName;
 
-if (currentRoute != AppRoutes.home) {
-  debugPrint(
-    'Waiting for authenticated home route before '
-    'notification navigation. Current route: $currentRoute',
-  );
+    if (currentRoute != AppRoutes.home) {
+      debugPrint(
+        'Waiting for authenticated home route before '
+        'notification navigation. Current route: $currentRoute',
+      );
 
-  _retryPendingNavigation();
-  return;
-}
+      _retryPendingNavigation();
+      return;
+    }
 
     final Map<String, dynamic> data =
         Map<String, dynamic>.from(_pendingNavigationData!);

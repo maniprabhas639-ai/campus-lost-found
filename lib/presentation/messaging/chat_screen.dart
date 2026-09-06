@@ -7,6 +7,7 @@ import '../../data/models/chat_message.dart';
 import '../../data/models/conversation.dart';
 import '../../data/models/lost_found_item.dart';
 import '../../data/services/firestore_service.dart';
+import '../../data/services/notification_api_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({required this.item, this.conversationId, super.key});
@@ -20,6 +21,8 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final NotificationApiService _notificationApiService =
+      NotificationApiService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -43,6 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _notificationApiService.dispose();
     super.dispose();
   }
 
@@ -207,6 +211,26 @@ class _ChatScreenState extends State<ChatScreen> {
       });
 
       _scrollToBottom();
+
+      final String notificationTitle = widget.item.title.trim().isEmpty
+          ? 'New message'
+          : widget.item.title.trim();
+
+      final String notificationBody = text;
+
+      final bool notificationSent =
+          await _notificationApiService.sendMessageNotification(
+        itemId: widget.item.id,
+        conversationId: conversation.id,
+        title: notificationTitle,
+        body: notificationBody,
+      );
+
+      if (!notificationSent) {
+        debugPrint(
+          'MESSAGE NOTIFICATION: Notification was not delivered.',
+        );
+      }
     } catch (error) {
       debugPrint('SEND MESSAGE FIRESTORE ERROR: $error');
 

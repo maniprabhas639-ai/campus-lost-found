@@ -19,6 +19,11 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _conversationsCollection =>
       _firestore.collection('conversations');
 
+  CollectionReference<Map<String, dynamic>> _fcmTokensCollection(
+    String userId,
+  ) =>
+      _usersCollection.doc(userId).collection('fcmTokens');
+
   Future<List<LostFoundItem>> getItems() async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
         .where('status', isEqualTo: 'active')
@@ -107,6 +112,70 @@ class FirestoreService {
     }
 
     return username.trim();
+  }
+
+  // ---------------------------------------------------------------------------
+  // FCM Tokens
+  // ---------------------------------------------------------------------------
+
+  Future<void> saveFcmToken({
+    required String userId,
+    required String token,
+    required String platform,
+  }) async {
+    final String trimmedToken = token.trim();
+
+    if (trimmedToken.isEmpty) {
+      throw ArgumentError('FCM token cannot be empty.');
+    }
+
+    final String tokenDocumentId = _createFcmTokenDocumentId(trimmedToken);
+
+    await _fcmTokensCollection(userId).doc(tokenDocumentId).set({
+      'token': trimmedToken,
+      'platform': platform,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> removeFcmToken({
+    required String userId,
+    required String token,
+  }) async {
+    final String trimmedToken = token.trim();
+
+    if (trimmedToken.isEmpty) {
+      return;
+    }
+
+    final String tokenDocumentId = _createFcmTokenDocumentId(trimmedToken);
+
+    await _fcmTokensCollection(userId).doc(tokenDocumentId).delete();
+  }
+
+  Future<List<String>> getFcmTokens(String userId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _fcmTokensCollection(userId).get();
+
+    return snapshot.docs
+        .map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> document) =>
+              document.data()['token'],
+        )
+        .whereType<String>()
+        .map((String token) => token.trim())
+        .where((String token) => token.isNotEmpty)
+        .toList();
+  }
+
+  String _createFcmTokenDocumentId(String token) {
+    final int hash = token.codeUnits.fold(
+      17,
+      (int previous, int character) =>
+          (previous * 31 + character) & 0x7fffffff,
+    );
+
+    return 'token_$hash';
   }
 
   Future<void> createItem({

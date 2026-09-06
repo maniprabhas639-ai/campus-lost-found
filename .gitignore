@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Firebase Admin SDK private credentials
+notification_server/service-account.json
+
+# Node.js dependencies
+notification_server/node_modules/
+notification_server/send_test_notification.js
