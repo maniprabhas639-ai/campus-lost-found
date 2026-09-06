@@ -14,7 +14,8 @@ class NotificationApiService {
   final FirebaseAuth _auth;
   final http.Client _client;
 
-  static const String _baseUrl = 'http://10.0.2.2:3000';
+  static const String _baseUrl =
+      'https://campus-lost-found-cqfe.onrender.com';
 
   Future<bool> sendMessageNotification({
     required String itemId,
