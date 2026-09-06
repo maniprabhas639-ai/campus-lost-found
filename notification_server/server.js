@@ -12,10 +12,15 @@ function loadServiceAccount() {
 
   if (serviceAccountJson) {
     try {
-      return JSON.parse(serviceAccountJson);
+      const decodedJson = Buffer.from(
+        serviceAccountJson.trim(),
+        'base64',
+      ).toString('utf8');
+
+      return JSON.parse(decodedJson);
     } catch (error) {
       throw new Error(
-        'FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.',
+        'FIREBASE_SERVICE_ACCOUNT_JSON is not valid Base64-encoded JSON.',
       );
     }
   }
