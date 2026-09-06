@@ -6,9 +6,26 @@ const { getAuth } = require('firebase-admin/auth');
 const { getMessaging } = require('firebase-admin/messaging');
 const { getFirestore } = require('firebase-admin/firestore');
 
-const serviceAccount = require(
-  path.join(__dirname, 'service-account.json'),
-);
+function loadServiceAccount() {
+  const serviceAccountJson =
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+
+  if (serviceAccountJson) {
+    try {
+      return JSON.parse(serviceAccountJson);
+    } catch (error) {
+      throw new Error(
+        'FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.',
+      );
+    }
+  }
+
+  return require(
+    path.join(__dirname, 'service-account.json'),
+  );
+}
+
+const serviceAccount = loadServiceAccount();
 
 const app = initializeApp({
   credential: cert(serviceAccount),
@@ -275,9 +292,10 @@ server.post('/send-message-notification', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   console.log(
-    `CampusFind Notification Server running on port ${PORT}`,
+    `CampusFind Notification Server running on ${HOST}:${PORT}`,
   );
 });
